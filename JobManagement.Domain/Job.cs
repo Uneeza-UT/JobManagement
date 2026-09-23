@@ -6,10 +6,11 @@ namespace JobManagement.Domain;
 
 public class Job : BaseEntity
 {
-    public string Type { get; set; }
-    public string Location { get; set; }
     public string Title { get; set; }
     public string Description { get; set; }
+    public JobType JobType { get; set; }
+    public EmploymentType EmploymentType { get; set; }
+    public string Location { get; set; }
     public int NumberOfVacancies { get; set; }
     public string Salary { get; set; }
     public string Responsibilities { get; set; }

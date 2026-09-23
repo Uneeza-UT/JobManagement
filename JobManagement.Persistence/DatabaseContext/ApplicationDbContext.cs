@@ -1,9 +1,6 @@
 ﻿using JobManagement.Domain;
 using JobManagement.Domain.Shared;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace JobManagement.Persistence.DatabaseContext
 {
@@ -19,12 +16,19 @@ namespace JobManagement.Persistence.DatabaseContext
         public DbSet<Company> Companies { get; set; }
 
 
+        // Configures the Entity Framework Core model by applying
+        // all entity configurations defined in this assembly.
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
             base.OnModelCreating(modelBuilder);
         }
 
+
+        // Automatically sets CreatedAt and UpdatedAt timestamps
+        // for entities derived from BaseEntity before changes are saved.
+        
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             foreach(var entry in base.ChangeTracker.Entries<BaseEntity>()

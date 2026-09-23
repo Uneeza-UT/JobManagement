@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace JobManagement.Domain.Enums
+namespace JobManagement.Domain.Enums;
+
+public enum JobApprovalStatus
 {
-    public enum JobApprovalStatus
-    {
-        Pending,
-        Accepted,
-        Rejected
-    }
+    Pending,
+    Accepted,
+    Rejected,
+    Expired
 }

@@ -10,13 +10,29 @@ namespace JobManagement.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<JobApplication> builder)
         {
-       
-            builder.HasIndex(q => new { q.JobId, q.ApplicationUserId })
+            builder.HasIndex(x => x.Email)
                 .IsUnique();
+
+
+            // Prevent a user from submitting multiple applications
+            // for the same job.
+
+            builder.HasIndex(q => new { q.JobId, q.UserId })
+                .IsUnique();
+
+
+            // Store the applicant status and gender enums as strings 
+            // instead of numeric value for database readability.
 
             builder.Property(q => q.Status)
                 .HasConversion<string>()
                 .HasDefaultValue(JobApplicationStatus.Applied);
+
+            builder.Property(q => q.Gender)
+                .HasConversion<string>();
+
+
+            // Configure the entity properties to have reasonable length limits to prevent excessively large values.
 
             builder.Property(q => q.FirstName)
                 .IsRequired()
@@ -33,7 +49,14 @@ namespace JobManagement.Persistence.Configurations
             builder.Property(q => q.PhoneNumber)
                .IsRequired()
                .HasMaxLength(100);
-      
+
+            builder.Property(q => q.Address)
+               .IsRequired()
+               .HasMaxLength(200);
+
+            builder.Property(q => q.CNIC)
+               .HasMaxLength(100);
+
         }
     }
 }

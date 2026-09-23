@@ -8,8 +8,8 @@
     <Project Path="JobManagement.Domain/JobManagement.Domain.csproj" />
   </Folder>
   <Folder Name="/src/Infrastructure/">
+    <Project Path="JobManagement.Identity/JobManagement.Identity.csproj" Id="5d211a33-7c1a-4c59-b1db-79f48aee417b" />
     <Project Path="JobManagement.Infrastructure/JobManagement.Infrastructure.csproj" />
     <Project Path="JobManagement.Persistence/JobManagement.Persistence.csproj" />
   </Folder>
-  <Folder Name="/test/" />
 </Solution>

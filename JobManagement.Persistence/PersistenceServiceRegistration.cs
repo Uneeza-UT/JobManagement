@@ -4,11 +4,15 @@ using Microsoft.Extensions.Configuration;
 using JobManagement.Persistence.DatabaseContext;
 using JobManagement.Application.Contracts.Persistence;
 using JobManagement.Persistence.Repositories;
+using JobManagement.Application.Contracts.Services;
 
 namespace JobManagement.Persistence;
 
 public static class PersistenceServiceRegistration
 {
+    // Registers dependencies required by the Persistence layer,
+    // including the database context and repositories.
+
     public static IServiceCollection AddPersistenceServices(this IServiceCollection services,
         IConfiguration configuration)
     {

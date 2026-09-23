@@ -1,18 +1,24 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>df5db142-0c6f-44ed-9cc4-8cacab0e7ff3</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.12">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\JobManagement.Application\JobManagement.Application.csproj" />
+    <ProjectReference Include="..\JobManagement.Identity\JobManagement.Identity.csproj" />
     <ProjectReference Include="..\JobManagement.Infrastructure\JobManagement.Infrastructure.csproj" />
     <ProjectReference Include="..\JobManagement.Persistence\JobManagement.Persistence.csproj" />
   </ItemGroup>

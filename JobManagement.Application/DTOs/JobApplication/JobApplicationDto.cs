@@ -1,24 +1,23 @@
-﻿using JobManagement.Domain;
-using JobManagement.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using JobManagement.Domain.Enums;
 
-namespace JobManagement.Application.DTOs.JobApplication
+
+namespace JobManagement.Application.DTOs.JobApplication;
+
+public class JobApplicationDto
 {
-    public class JobApplicationDto
-    {
-        public int Id { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Email { get; set; }
-        public string PhoneNumber { get; set; }
-        public string Address { get; set; }
-        public DateTime BirthDate { get; set; }
-        public string? ApplicationDocumentKey { get; set; }
-        public JobApplicationStatus Status { get; set; }
-        public int JobId { get; set; }
-        public int ApplicationUserId { get; set; }
-        public DateTime DateApplied { get; set; }
-    }
+    public int Id { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public string Email { get; set; }
+    public string PhoneNumber { get; set; }
+    public string Address { get; set; }
+    public Gender? Gender { get; set; }
+    public DateTime? BirthDate { get; set; }
+    public string? ApplicationDocument { get; set; }
+    public string? CNIC { get; set; }
+    public bool? HasDisability { get; set; }
+    public JobApplicationStatus Status { get; set; }
+    public int JobId { get; set; }
+    public int UserId { get; set; }
+    public DateTime DateApplied { get; set; }
 }

@@ -10,13 +10,25 @@ namespace JobManagement.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<Job> builder)
         {
+
+            // Store the enums approval status, job type, and employment type as strings
+            // instead of their numeric values for database readability.
+
             builder.Property(q => q.ApprovalStatus)
                 .HasConversion<string>()
                 .HasDefaultValue(JobApprovalStatus.Pending);
 
-            builder.Property(q => q.Type)
-                .IsRequired()
-                .HasMaxLength(100);
+
+            builder.Property(q => q.JobType)
+                .HasConversion<string>();
+
+
+            builder.Property(q => q.EmploymentType)
+                .HasConversion<string>();
+
+
+            // Configure the entity properties to have reasonable length limits to prevent excessively large values.
+
 
             builder.Property(q => q.Location)
                 .IsRequired()
