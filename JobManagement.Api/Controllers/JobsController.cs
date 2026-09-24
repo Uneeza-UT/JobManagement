@@ -118,7 +118,7 @@ namespace JobManagement.Api.Controllers
 
 
 
-
+        [HttpGet("search")]
         [ProducesResponseType(404)]
         [ProducesDefaultResponseType]
         public async Task<ActionResult<List<JobDto>>> Search(SearchDto dto)
@@ -129,7 +129,7 @@ namespace JobManagement.Api.Controllers
 
 
 
-
+        [HttpGet("sort")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesDefaultResponseType]

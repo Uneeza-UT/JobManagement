@@ -1,7 +1,6 @@
 ﻿using JobManagement.Application.Contracts.Identity;
 using JobManagement.Application.Models.Identity;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobManagement.Api.Controllers
@@ -38,5 +37,40 @@ namespace JobManagement.Api.Controllers
         {
             return Ok(await _authenticationService.Register(request));
         }
+
+
+
+
+        [HttpPost("forgot-password")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult> ForgotPassword(ForgotPasswordRequest request)
+        {
+            return Ok("A password reset link has been sent.");
+        }
+
+
+
+        [HttpPost("reset-password")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult> ResetPassword(ResetPasswordRequest request)
+        {
+            return Ok("Password has been reset successfully.");
+        }
+
+
+
+
+        [HttpPost("change-password")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult> ChangePassword(ChangePasswordRequest request)
+        {
+            return Ok("Password has been changed successfully.");
+        }
+
     }
 }

@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using JobManagement.Application.Contracts.Services;
+using Microsoft.AspNetCore.Http;
 
 namespace JobManagement.Infrastructure.Services
 {
-    public class CurrentUserService
+    public class CurrentUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
 

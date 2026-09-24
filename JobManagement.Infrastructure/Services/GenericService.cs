@@ -1,6 +1,5 @@
 ﻿using JobManagement.Application.Contracts.Services;
 using JobManagement.Application.Exceptions;
-using JobManagement.Domain;
 using JobManagement.Identity.Models;
 using Microsoft.AspNetCore.Identity;
 
@@ -9,9 +8,9 @@ namespace JobManagement.Infrastructure.Services
     public class GenericService : IGenericService
     {
         protected readonly UserManager<ApplicationUser> _userManager;
-        protected readonly CurrentUserService _currentUserService;
+        protected readonly ICurrentUserService _currentUserService;
 
-        public GenericService(UserManager<ApplicationUser> userManager, CurrentUserService currentUserService)
+        public GenericService(UserManager<ApplicationUser> userManager, ICurrentUserService currentUserService)
         {
             this._userManager = userManager;
             this._currentUserService = currentUserService;

@@ -6,8 +6,7 @@ namespace JobManagement.Application.Contracts.Services;
 public interface IJobApplicationService : IGenericService
 {
     Task<List<JobApplicationDto>> GetPagedAsync(PaginationDto dto);
-    Task<List<JobApplicationDto>> GetByUserAsync(PaginationDto dto);
-    Task<List<JobApplicationDto>> GetByJobAsync(int jobId, PaginationDto dto);
+    Task<List<JobApplicationDto>> GetApplications(int? jobId, PaginationDto dto);
     Task<JobApplicationDto> GetByIdAsync(int id);
     Task<int> CreateAsync(CreateJobApplicationDto dto);
     Task ChangeStatus(ChangeJobApplicationStatusDto dto);

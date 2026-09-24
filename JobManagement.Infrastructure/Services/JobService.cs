@@ -25,7 +25,7 @@ namespace JobManagement.Infrastructure.Services
         public JobService(IJobRepository jobRepository, IMapper mapper,
             IEmailSender emailSender,
             UserManager<ApplicationUser> userManager, 
-            CurrentUserService currentUserService) : base(userManager, currentUserService)
+            ICurrentUserService currentUserService) : base(userManager, currentUserService)
         {
             this._jobRepository = jobRepository;
             this._mapper = mapper;
@@ -83,7 +83,7 @@ namespace JobManagement.Infrastructure.Services
 
 
         //Creates a new job entity
-        //Ensures only a user with "Company" role can create a job
+        //Only a user with "Company" role can create a job
         public async Task<int> CreateAsync(CreateJobDto dto)
         {
             //Validate the dto
@@ -120,7 +120,7 @@ namespace JobManagement.Infrastructure.Services
 
 
         //Updates a job entity
-        //Ensures only a user with "Company" role can update a job
+        //Only a user with "Company" role can update a job
         public async Task UpdateAsync(UpdateJobDto dto)
         {
             //Validate the dto
@@ -171,15 +171,6 @@ namespace JobManagement.Infrastructure.Services
         //Only Admins have the authority to perform this task
         public async Task ChangeApprovalStatus(ChangeJobApprovalStatusDto dto)
         {
-            //Check if the user is an Admin
-            bool isAdmin = await GetUserRole("Administrator");
-
-            if (!isAdmin)
-            {
-                throw new ForbiddenException("Only Administrators can change the job status.");
-            }
-
-
             //Validate the dto
             var validator = new ChangeJobApprovalStatusValidator();
             var validationResult = await validator.ValidateAsync(dto);
@@ -220,11 +211,11 @@ namespace JobManagement.Infrastructure.Services
                     To = user.Email,
                     Subject = "Job Posting Status Updated",
                     Body = $"Hello {user.FirstName},\n\n" +
-                   $"The status of your job posting, {job.Title}, has been updated.\n" +
-                   $"New status: {job.ApprovalStatus}.\n" +
-                   "Please log in to the Job Management System to view the details of your job posting.\n\n" +
-                   "Thank you,\n" +
-                   "Job Management System"
+                           $"The status of your job posting, {job.Title}, has been updated.\n" +
+                           $"New status: {job.ApprovalStatus}.\n" +
+                           "Please log in to the Job Management System to view the details of your job posting.\n\n" +
+                           "Thank you,\n" +
+                           "Job Management System"
                 });
             }
         }  
@@ -262,11 +253,11 @@ namespace JobManagement.Infrastructure.Services
                         To = user.Email,
                         Subject = "Job Posting Deleted by Administrator",
                         Body = $"Hello {user.FirstName},\n\n" +
-                       $"Your job posting, {job.Title}, has been deleted by an administrator from the Job Management System.\n" +
-                       "The job posting is no longer available in the system.\n" +
-                       "If you have any questions regarding this action, please contact the system administrator.\n\n" +
-                       "Thank you,\n" +
-                       "Job Management System"
+                               $"Your job posting, {job.Title}, has been deleted by an administrator from the Job Management System.\n" +
+                               "The job posting is no longer available in the system.\n" +
+                               "If you have any questions regarding this action, please contact the system administrator.\n\n" +
+                               "Thank you,\n" +
+                               "Job Management System"
                     });
                 }
             }

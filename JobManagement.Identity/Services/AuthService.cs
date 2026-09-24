@@ -1,5 +1,6 @@
 ﻿using JobManagement.Application.Contracts.Email;
 using JobManagement.Application.Contracts.Identity;
+using JobManagement.Application.Contracts.Services;
 using JobManagement.Application.Exceptions;
 using JobManagement.Application.Models.Email;
 using JobManagement.Application.Models.Identity;
@@ -19,18 +20,26 @@ namespace JobManagement.Identity.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly JwtSettings _jwtSettings;
+        private readonly FrontendSettings _frontendSettings;
+        private readonly ICurrentUserService _currentUserService;
         private readonly IEmailSender _emailSender;
 
         public AuthService(UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             IOptions<JwtSettings> jwtSettings,
+            IOptions<FrontendSettings> frontendSettings,
+            ICurrentUserService currentUserService,
             IEmailSender emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _jwtSettings = jwtSettings.Value;
+            _frontendSettings = frontendSettings.Value;
+            _currentUserService = currentUserService;
             _emailSender = emailSender;
         }
+
+
 
         public async Task<AuthResponse> Login(AuthRequest request)
         {
@@ -178,6 +187,121 @@ namespace JobManagement.Identity.Services
                 signingCredentials: signingCredentials);
 
             return jwtSecurityToken;
+        }
+
+
+
+        //Method to change password from profile when user is logged in
+        public async Task ChangePassword(ChangePasswordRequest request)
+        {
+            var user = await _userManager.FindByIdAsync(_currentUserService.UserId);
+           
+            if (user == null)
+            {
+                throw new NotFoundException(nameof(ApplicationUser), _currentUserService.UserId);
+            }
+
+            var result = await _userManager.ChangePasswordAsync(
+                user,
+                request.CurrentPassword,
+                request.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(
+                   Environment.NewLine,
+                   result.Errors.Select(e => e.Description));
+
+                throw new BadRequestException(errors);
+            }
+
+            await _emailSender.SendEmail(new EmailMessageData
+            {
+                To = user.Email!,
+                Subject = "Your Password was Changed",
+                Body = $"Hello {user.FirstName},\n\n" +
+                        "Your password for the Job Management System has been changed.\n\n" +
+                        "If you made this change, no further action is required.\n\n" +
+                        "If you did not change your password, please contact the system administrator immediately.\r\n\n\n" +
+                        "Thank you,\n" +
+                        "Job Management System"
+            });
+
+        }
+
+
+
+        //Takes user email and sends a reset password link
+        public async Task ForgotPassword(ForgotPasswordRequest request)
+        {
+            var user = await _userManager.FindByEmailAsync(request.Email);
+
+            if (user == null)
+            {
+                throw new NotFoundException(nameof(ApplicationUser), request.Email);
+            }
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+
+            var resetUrl =
+                $"{_frontendSettings.ResetPasswordUrl}" +
+                $"?email={Uri.EscapeDataString(user.Email!)}" +
+                $"&token={Uri.EscapeDataString(token)}";
+
+
+            await _emailSender.SendEmail(new EmailMessageData
+            {
+                To = user.Email!,
+                Subject = "Reset Your Password",
+                Body = $"Hello {user.FirstName},\n\n" +
+                        "We received a request to reset your password.\n\n" +
+                        $"Reset your password using the following link:\n{resetUrl}\n\n" +
+                        "If you did not request a password reset, you can safely ignore this email.\n\n" +
+                        "Thank you,\n" +
+                        "Job Management System"
+            });
+
+        }
+
+        //Method to change password from profile when user is logged in
+        public async Task ResetPassword(ResetPasswordRequest request)
+        {
+            var user = await _userManager.FindByEmailAsync(request.Email);
+
+            if (user == null)
+            {
+                throw new NotFoundException(nameof(ApplicationUser), _currentUserService.UserId);
+            }
+
+            var result = await _userManager.ResetPasswordAsync(
+                user,
+                request.Token,
+                request.NewPassword);
+
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(
+                    Environment.NewLine,
+                    result.Errors.Select(e => e.Description));
+
+                throw new BadRequestException(errors);
+            }
+
+
+            await _emailSender.SendEmail(new EmailMessageData
+            {
+                To = user.Email!,
+                Subject = "Your Password was Reset",
+                Body = $"Hello {user.FirstName},\n\n" +
+                        "Your password for the Job Management System has been changed.\n\n" +
+                        "If you made this change, no further action is required.\n\n" +
+                        "If you did not change your password, please contact the system administrator immediately.\r\n\n\n" +
+                        "Thank you,\n" +
+                        "Job Management System"
+            });
+
         }
     }
 }

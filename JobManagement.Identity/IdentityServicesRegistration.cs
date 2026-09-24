@@ -20,6 +20,7 @@ namespace JobManagement.Identity
             IConfiguration configuration)
         {
             services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+            services.Configure<FrontendSettings>(configuration.GetSection("Frontend"));
 
             services.AddDbContext<ApplicationIdentityDbContext>(options =>
                 options

@@ -24,7 +24,7 @@ namespace JobManagement.Infrastructure.Services
         public CompanyService(ICompanyRepository companyRepository, IMapper mapper,
             IEmailSender emailSender,
             UserManager<ApplicationUser> userManager,
-            CurrentUserService currentUserService) : base(userManager, currentUserService)
+            ICurrentUserService currentUserService) : base(userManager, currentUserService)
         {
             this._companyRepository = companyRepository;
             this._mapper = mapper;
@@ -59,18 +59,9 @@ namespace JobManagement.Infrastructure.Services
 
 
         //Creates a new company entity
-        //Ensures only a user with "Company" role can create a company
+        //Only a user with "Company" role can create a company
         public async Task<int> CreateAsync(CreateCompanyDto dto)
         {
-            //Ensures only the user with the "Company" role can create a company
-            bool isCompany = await GetUserRole("Company");
-
-            if (!isCompany)
-            {
-                throw new ForbiddenException("Only users with the Company role can add a company.");
-            }
-
-
             //Validate the dto
             var validator = new CreateCompanyValidator();
             var validationResult = await validator.ValidateAsync(dto);
@@ -104,7 +95,7 @@ namespace JobManagement.Infrastructure.Services
 
             if (user == null)
             {
-                throw new NotFoundException(nameof(ApplicationUser), _currentUserService.UserId);
+                throw new NotFoundException(nameof(ApplicationUser), userId);
             }
 
             user.CompanyId = company.Id;
@@ -116,7 +107,7 @@ namespace JobManagement.Infrastructure.Services
 
 
         //Updates a company entity
-        //Ensures only a user with "Company" role can update their own company
+        //Only a user with "Company" role can update their own company
         public async Task UpdateAsync(UpdateCompanyDto dto)
         {
             var company = await _companyRepository.GetByIdAsync(dto.Id);
@@ -162,7 +153,7 @@ namespace JobManagement.Infrastructure.Services
 
 
         //Deletes a company entity
-        //Ensures only a user with "Company" role can delete their own company
+        //Only a user with "Company" role can delete their own company
         public async Task DeleteAsync(int id)
         {
             var company = await _companyRepository.GetByIdAsync(id);
@@ -191,10 +182,10 @@ namespace JobManagement.Infrastructure.Services
                     To = user.Email,
                     Subject = "Job Posting Status Updated",
                     Body = $"Hello {user.FirstName},\n\n" +
-                   $"Your company profile, {company.Name}, has been successfully deleted from the Job Management System.\n" +
-                   "Your associated job postings and applications have not been deleted.\n\n" +
-                   "Thank you,\n" +
-                   "Job Management System"
+                           $"Your company profile, {company.Name}, has been successfully deleted from the Job Management System.\n" +
+                           "Your associated job postings and applications have not been deleted.\n\n" +
+                           "Thank you,\n" +
+                           "Job Management System"
                 });
             }
         }

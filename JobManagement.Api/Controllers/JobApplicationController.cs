@@ -22,7 +22,8 @@ namespace JobManagement.Api.Controllers
 
 
 
-        [HttpGet]
+        [HttpGet("get-all")]
+        [Authorize(Roles = "Student, Company")]
         public async Task<ActionResult<List<JobApplicationDto>>> GetAll([FromQuery] PaginationDto dto)
         {
             var jobApplications = await _jobApplicationService.GetPagedAsync(dto);
@@ -40,34 +41,16 @@ namespace JobManagement.Api.Controllers
         }
 
 
-        [HttpGet("my-applications")]
-        [Authorize(Roles = "Student")]
-        [ProducesResponseType(403)]
-        public async Task<ActionResult<List<JobApplicationDto>>> Get([FromQuery] PaginationDto dto)
-        {
-            var jobApplications = await _jobApplicationService.GetByUserAsync(dto);
-
-            if (jobApplications == null || jobApplications.Count == 0)
-            {
-                return Ok(new
-                {
-                    message = "No job applications found for the requested page.",
-                    data = new List<JobApplicationDto>()
-                });
-            }
-
-            return Ok(jobApplications);
-        }
 
 
 
-        [HttpGet("job/{jobId}")]
-        [Authorize(Roles = "Company")]
+        [HttpGet]
+        [Authorize(Roles = "Student, Company")]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<List<JobApplicationDto>>> Get(int jobId, [FromQuery] PaginationDto dto)
+        public async Task<ActionResult<List<JobApplicationDto>>> Get([FromQuery] int? jobId, [FromQuery] PaginationDto dto)
         {
-            var jobApplications = await _jobApplicationService.GetByJobAsync(jobId, dto);
+            var jobApplications = await _jobApplicationService.GetApplications(jobId, dto);
 
             if (jobApplications == null || jobApplications.Count == 0)
             {
@@ -85,6 +68,7 @@ namespace JobManagement.Api.Controllers
 
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Student, Company")]
         [ProducesResponseType(404)]
         public async Task<ActionResult<JobApplicationDto>> GetById(int id)
         {
@@ -143,7 +127,7 @@ namespace JobManagement.Api.Controllers
 
 
 
-
+        [HttpGet("search")]
         [ProducesResponseType(404)]
         [ProducesDefaultResponseType]
         public async Task<ActionResult<List<JobApplicationDto>>> Search(SearchDto dto)
@@ -154,7 +138,7 @@ namespace JobManagement.Api.Controllers
 
 
 
-
+        [HttpGet("sort")]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesDefaultResponseType]

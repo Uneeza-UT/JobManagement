@@ -34,7 +34,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IJobService, JobService>();
         services.AddScoped<IJobApplicationService, JobApplicationService>();
         services.AddScoped<ICompanyService, CompanyService>();
-        services.AddScoped<CurrentUserService>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddHostedService<JobExpirationService>();
         services.AddHttpClient<IFileStorageService, FileStorageService>();
 

@@ -28,7 +28,7 @@ namespace JobManagement.Infrastructure.Services
                 IFileStorageService fileStorageService,
                 IEmailSender emailSender,
                 UserManager<ApplicationUser> userManager,
-                CurrentUserService currentUserService) : base(userManager, currentUserService)
+                ICurrentUserService currentUserService) : base(userManager, currentUserService)
         {
             this._mapper = mapper;
             this._jobApplicationRepository = jobApplicationRepository;       
@@ -48,22 +48,53 @@ namespace JobManagement.Infrastructure.Services
 
 
 
-        //Retrieve all applications submitted by a particular student using user Id
-        public async Task<List<JobApplicationDto>> GetByUserAsync(PaginationDto dto)
+        // Retrieves applications for the student who is logged in
+        // or applications for a specific job owned by a company
+        public async Task<List<JobApplicationDto>> GetApplications(int? jobId, PaginationDto dto)
         {
+            IReadOnlyList<JobApplication> jobApplications = new List<JobApplication>();
+
             bool isStudent = await GetUserRole("Student");
+            bool isCompany = await GetUserRole("Company");
 
-            if (!isStudent)
+            if (isStudent)
             {
-                throw new ForbiddenException("Only students can view their own job applications.");
+                if (jobId.HasValue)
+                {
+                    throw new BadRequestException(
+                        "Job Id should not be provided when retrieving a student's applications.");
+                }
+
+                //Retrieve all applications submitted by a particular student using user Id
+                jobApplications = await _jobApplicationRepository
+                   .GetByUserIdAsync(_currentUserService.UserId, dto.PageNumber, dto.PageSize);
             }
 
+            else if (isCompany && jobId.HasValue)
+            {
+                var job = await _jobRepository.GetByIdAsync(jobId.Value);
 
-            var jobApplications = await _jobApplicationRepository
-                    .GetByUserIdAsync(
-                        _currentUserService.UserId, 
-                        dto.PageNumber, 
-                        dto.PageSize);
+                if (job == null)
+                {
+                    throw new NotFoundException(nameof(Job), jobId.Value);
+                }
+
+
+                //Ensures only users associated with the job's company can view its applications
+
+                string exceptionMessage = "You can only view job applications submitted for jobs posted by your own company.";
+                await CheckUserAuthorization(job.CompanyId, exceptionMessage);
+
+
+                //Retrieve all applications submitted for a articular job using job Id
+                jobApplications = await _jobApplicationRepository.GetByJobIdAsync(jobId.Value, dto.PageNumber, dto.PageSize);
+            }
+
+            else
+            {
+                throw new ForbiddenException("You are not authorized to view job applications.");
+            }
+
 
             var data = _mapper.Map<List<JobApplicationDto>>(jobApplications);
             return data;
@@ -71,28 +102,6 @@ namespace JobManagement.Infrastructure.Services
         }
 
 
-
-        //Retrieve all applications submitted for a articular job using job Id
-        //Ensures only users associated with the job's company can view its applications
-        public async Task<List<JobApplicationDto>> GetByJobAsync(int jobId, PaginationDto dto)
-        {
-            var job = await _jobRepository.GetByIdAsync(jobId);
-
-            if (job == null)
-            {
-                throw new NotFoundException(nameof(Job), jobId);
-            }
-
-
-            string exceptionMessage = "You can only view job applications submitted for jobs posted by your own company.";
-            await CheckUserAuthorization(job.CompanyId, exceptionMessage);
-
-
-            var jobApplications = await _jobApplicationRepository.GetByJobIdAsync(jobId, dto.PageNumber, dto.PageSize);
-            var data = _mapper.Map<List<JobApplicationDto>>(jobApplications);
-            return data;
-
-        }
 
 
 
@@ -195,11 +204,11 @@ namespace JobManagement.Infrastructure.Services
                     To = user.Email,
                     Subject = "Application Submitted Successfully",
                     Body = $"Hello {user.FirstName},\n\n" +
-                   $"Your application for {job.Title} at {job.Company.Name} has been successfully submitted.\n" +
-                   $"Date applied: {jobApplication.DateApplied}.\n" +
-                   "Your application has been recorded in the Job Management System. You can log in to view your application and any future status updates.\n\n" +
-                   "Thank you,\n" +
-                   "Job Management System"
+                           $"Your application for {job.Title} at {job.Company.Name} has been successfully submitted.\n" +
+                           $"Date applied: {jobApplication.DateApplied}.\n" +
+                           "Your application has been recorded in the Job Management System. You can log in to view your application and any future status updates.\n\n" +
+                           "Thank you,\n" +
+                           "Job Management System"
                 });
             }
 
@@ -259,11 +268,11 @@ namespace JobManagement.Infrastructure.Services
                     To = user.Email,
                     Subject = "Application Status Updated",
                     Body = $"Hello {user.FirstName},\n\n" +
-                   $"The status of your application for {job.Title} at {job.Company.Name} has been updated.\n" +
-                   $"New status: {jobApplication.Status}.\n" +
-                   "Please log in to the Job Management System to view your application details.\n\n" +
-                   "Thank you,\n" +
-                   "Job Management System"
+                           $"The status of your application for {job.Title} at {job.Company.Name} has been updated.\n" +
+                           $"New status: {jobApplication.Status}.\n" +
+                           "Please log in to the Job Management System to view your application details.\n\n" +
+                           "Thank you,\n" +
+                           "Job Management System"
                 });
             }
         }
