@@ -29,6 +29,17 @@ namespace JobManagement.Persistence.Repositories
 
 
 
+        // Retrieves a specific job entity including company entity.
+        public async Task<Job?> GetByIdWithCompanyAsync(int id)
+        {
+            return await _dbContext.Set<Job>()
+                .AsNoTracking()
+                .Include(j => j.Company)
+                .FirstOrDefaultAsync(j => j.Id == id);
+        }
+
+
+
         // Retrieves job entities that match the search term across the specified string properties.
         public async Task<IReadOnlyList<Job>> SearchAsync(string searchTerm)
         {

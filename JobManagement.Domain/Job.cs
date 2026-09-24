@@ -17,6 +17,7 @@ public class Job : BaseEntity
     public string Requirements { get; set; }
     public JobApprovalStatus ApprovalStatus { get; set; }
     public DateTime ApplicationDeadline { get; set; }
+    public string PostedByUserId { get; set; }
     public int CompanyId { get; set; }
     public Company? Company { get; set; }
     public ICollection<JobApplication> Applications { get; set; } = new List<JobApplication>();

@@ -21,7 +21,7 @@ namespace JobManagement.Persistence.Repositories
             return await _dbContext.Set<JobApplication>()
                 .AsNoTracking()
                 .Where(j =>
-                    j.UserId == userId)
+                    j.ApplicantId == userId)
                 .Skip(skip)
                 .Take(pageSize)
                 .ToListAsync();

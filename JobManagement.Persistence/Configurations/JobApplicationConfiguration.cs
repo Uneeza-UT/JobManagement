@@ -17,7 +17,7 @@ namespace JobManagement.Persistence.Configurations
             // Prevent a user from submitting multiple applications
             // for the same job.
 
-            builder.HasIndex(q => new { q.JobId, q.UserId })
+            builder.HasIndex(q => new { q.JobId, q.ApplicantId })
                 .IsUnique();
 
 

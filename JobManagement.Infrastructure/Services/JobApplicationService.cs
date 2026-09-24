@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using JobManagement.Application.Contracts.Email;
 using JobManagement.Application.Contracts.Persistence;
 using JobManagement.Application.Contracts.Services;
 using JobManagement.Application.DTOs.Common;
 using JobManagement.Application.DTOs.JobApplication;
 using JobManagement.Application.Enums;
 using JobManagement.Application.Exceptions;
+using JobManagement.Application.Models.Email;
 using JobManagement.Application.Validations.JobApplication;
 using JobManagement.Application.Validations.Sort;
 using JobManagement.Domain;
@@ -19,10 +21,12 @@ namespace JobManagement.Infrastructure.Services
         private readonly IJobApplicationRepository _jobApplicationRepository;      
         private readonly IJobRepository _jobRepository;      
         private readonly IFileStorageService _fileStorageService;
+        private readonly IEmailSender _emailSender;
 
         public JobApplicationService(IJobApplicationRepository jobApplicationRepository, IMapper mapper,
                 IJobRepository jobRepository,
                 IFileStorageService fileStorageService,
+                IEmailSender emailSender,
                 UserManager<ApplicationUser> userManager,
                 CurrentUserService currentUserService) : base(userManager, currentUserService)
         {
@@ -30,6 +34,7 @@ namespace JobManagement.Infrastructure.Services
             this._jobApplicationRepository = jobApplicationRepository;       
             this._jobRepository = jobRepository;
             this._fileStorageService = fileStorageService;
+            this._emailSender = emailSender;
         }
 
 
@@ -120,6 +125,25 @@ namespace JobManagement.Infrastructure.Services
                 throw new ForbiddenException("Only students can apply for this job.");
             }
 
+
+            //Check that the specified job exists before creating the application
+            var job = await _jobRepository.GetByIdWithCompanyAsync(dto.JobId);
+
+            if (job == null)
+            {
+                throw new NotFoundException(nameof(JobApplication), dto.JobId);
+            }
+
+
+            // Ensure the application deadline has not already passed
+            if (job.ApplicationDeadline <= DateTime.Now)
+            {
+                throw new BadRequestException(
+                    "You cannot apply for this job because its application deadline has passed.");
+            }
+
+
+
             //Validate the dto
             var validator = new CreateJobApplicationValidator();
             var validationResult = await validator.ValidateAsync(dto);
@@ -129,14 +153,6 @@ namespace JobManagement.Infrastructure.Services
                 throw new BadRequestException("Invalid job application entity. ", validationResult);
             }
 
-
-            //Check that the specified job exists before creating the application
-            var job = await _jobRepository.GetByIdAsync(dto.JobId);
-
-            if (job == null)
-            {
-                throw new NotFoundException(nameof(JobApplication), dto.JobId);
-            }
 
 
             //Ensure that no other applicant has applied with the same email address for a job
@@ -150,7 +166,7 @@ namespace JobManagement.Infrastructure.Services
 
             var jobApplication = _mapper.Map<JobApplication>(dto);
             jobApplication.DateApplied = DateTime.Now;
-            jobApplication.UserId = _currentUserService.UserId;
+            jobApplication.ApplicantId = _currentUserService.UserId;
 
 
             //Save application document (CV/Resume) in Supabase
@@ -167,6 +183,26 @@ namespace JobManagement.Infrastructure.Services
                            
 
             await _jobApplicationRepository.CreateAsync(jobApplication);
+
+
+            //Notify the user about successful submittion of their job application through email
+            var user = await _userManager.FindByIdAsync(jobApplication.ApplicantId);
+
+            if (user != null && !string.IsNullOrEmpty(user.Email))
+            {
+                await _emailSender.SendEmail(new EmailMessageData
+                {
+                    To = user.Email,
+                    Subject = "Application Submitted Successfully",
+                    Body = $"Hello {user.FirstName},\n\n" +
+                   $"Your application for {job.Title} at {job.Company.Name} has been successfully submitted.\n" +
+                   $"Date applied: {jobApplication.DateApplied}.\n" +
+                   "Your application has been recorded in the Job Management System. You can log in to view your application and any future status updates.\n\n" +
+                   "Thank you,\n" +
+                   "Job Management System"
+                });
+            }
+
             return jobApplication.Id;
         }
 
@@ -185,7 +221,7 @@ namespace JobManagement.Infrastructure.Services
 
 
             //Fetch the job entity
-            var job = await _jobRepository.GetByIdAsync(jobApplication.JobId);
+            var job = await _jobRepository.GetByIdWithCompanyAsync(jobApplication.JobId);
 
             if (job == null)
             {
@@ -210,6 +246,26 @@ namespace JobManagement.Infrastructure.Services
 
             _mapper.Map(dto, jobApplication);
             await _jobApplicationRepository.UpdateAsync(jobApplication);
+
+
+            //Notify the user about the status update of their job application through email
+
+            var user = await _userManager.FindByIdAsync(jobApplication.ApplicantId);
+
+            if (user != null && !string.IsNullOrEmpty(user.Email))
+            {
+                await _emailSender.SendEmail(new EmailMessageData
+                {
+                    To = user.Email,
+                    Subject = "Application Status Updated",
+                    Body = $"Hello {user.FirstName},\n\n" +
+                   $"The status of your application for {job.Title} at {job.Company.Name} has been updated.\n" +
+                   $"New status: {jobApplication.Status}.\n" +
+                   "Please log in to the Job Management System to view your application details.\n\n" +
+                   "Thank you,\n" +
+                   "Job Management System"
+                });
+            }
         }
 
 

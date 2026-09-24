@@ -1,5 +1,7 @@
-﻿using JobManagement.Application.Contracts.Identity;
+﻿using JobManagement.Application.Contracts.Email;
+using JobManagement.Application.Contracts.Identity;
 using JobManagement.Application.Exceptions;
+using JobManagement.Application.Models.Email;
 using JobManagement.Application.Models.Identity;
 using JobManagement.Application.Validations.Identity;
 using JobManagement.Identity.Models;
@@ -17,14 +19,17 @@ namespace JobManagement.Identity.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly JwtSettings _jwtSettings;
+        private readonly IEmailSender _emailSender;
 
         public AuthService(UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            IOptions<JwtSettings> jwtSettings)
+            IOptions<JwtSettings> jwtSettings,
+            IEmailSender emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _jwtSettings = jwtSettings.Value;
+            _emailSender = emailSender;
         }
 
         public async Task<AuthResponse> Login(AuthRequest request)
@@ -117,6 +122,20 @@ namespace JobManagement.Identity.Services
 
             //Assign the selecetd role to the new user
             await _userManager.AddToRoleAsync(user, request.Role);
+
+
+            //Notify the user about successful registration through email
+            await _emailSender.SendEmail(new EmailMessageData
+            {
+                To = user.Email,
+                Subject = "Welcome to the Job Management System",
+                Body = $"Hello {user.FirstName},\n\n" +
+                   "Your account has been successfully created.\n\n" +
+                   "Thank you,\n" +
+                   "Job Management System"
+            });
+
+
             return new RegistrationResponse() { UserId = user.Id };
         }
 

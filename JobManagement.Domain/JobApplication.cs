@@ -19,5 +19,5 @@ public class JobApplication
     public JobApplicationStatus Status { get; set; }
     public int JobId { get; set; }
     public Job? Job { get; set; } 
-    public string UserId { get; set; }
+    public string ApplicantId { get; set; }
 }

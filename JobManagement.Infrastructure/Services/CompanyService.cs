@@ -1,17 +1,17 @@
 ﻿using AutoMapper;
+using JobManagement.Application.Contracts.Email;
 using JobManagement.Application.Contracts.Persistence;
 using JobManagement.Application.Contracts.Services;
 using JobManagement.Application.DTOs.Common;
 using JobManagement.Application.DTOs.Company;
 using JobManagement.Application.Enums;
 using JobManagement.Application.Exceptions;
-using JobManagement.Application.Models.Identity;
+using JobManagement.Application.Models.Email;
 using JobManagement.Application.Validations.Company;
 using JobManagement.Application.Validations.Sort;
 using JobManagement.Domain;
 using JobManagement.Identity.Models;
 using Microsoft.AspNetCore.Identity;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace JobManagement.Infrastructure.Services
 {
@@ -19,13 +19,16 @@ namespace JobManagement.Infrastructure.Services
     {
         private readonly IMapper _mapper;
         private readonly ICompanyRepository _companyRepository;
+        private readonly IEmailSender _emailSender;
 
         public CompanyService(ICompanyRepository companyRepository, IMapper mapper,
+            IEmailSender emailSender,
             UserManager<ApplicationUser> userManager,
             CurrentUserService currentUserService) : base(userManager, currentUserService)
         {
             this._companyRepository = companyRepository;
             this._mapper = mapper;
+            this._emailSender = emailSender;
         }
 
 
@@ -89,11 +92,14 @@ namespace JobManagement.Infrastructure.Services
 
             var company = _mapper.Map<Company>(dto);
             company.CreatedAt = DateTime.Now;
+
+            var userId = _currentUserService.UserId;
+
+            company.OwnerUserId = _currentUserService.UserId;
             await _companyRepository.CreateAsync(company);
 
 
-            // Link the user's Identity account to the company they registered
-            var userId = _currentUserService.UserId;
+            // Link the user's Identity account to the company they registered           
             var user = await _userManager.FindByIdAsync(userId);
 
             if (user == null)
@@ -173,6 +179,24 @@ namespace JobManagement.Infrastructure.Services
             await CheckUserAuthorization(id, exceptionMessage);
 
             await _companyRepository.DeleteAsync(company);
+
+
+            //Notify the user about deletion of company profile through email
+            var user = await _userManager.FindByIdAsync(company.OwnerUserId);
+
+            if (user != null && !string.IsNullOrEmpty(user.Email))
+            {
+                await _emailSender.SendEmail(new EmailMessageData
+                {
+                    To = user.Email,
+                    Subject = "Job Posting Status Updated",
+                    Body = $"Hello {user.FirstName},\n\n" +
+                   $"Your company profile, {company.Name}, has been successfully deleted from the Job Management System.\n" +
+                   "Your associated job postings and applications have not been deleted.\n\n" +
+                   "Thank you,\n" +
+                   "Job Management System"
+                });
+            }
         }
 
 

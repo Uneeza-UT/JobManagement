@@ -34,7 +34,6 @@ namespace JobManagement.Identity
 
 
             services.AddTransient<IAuthService, AuthService>();
-            services.AddTransient<IUserService, UserService>();
 
             services.AddAuthentication(options =>
             {

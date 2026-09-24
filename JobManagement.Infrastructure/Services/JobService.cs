@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using JobManagement.Application.Contracts.Email;
 using JobManagement.Application.Contracts.Persistence;
 using JobManagement.Application.Contracts.Services;
 using JobManagement.Application.DTOs.Common;
 using JobManagement.Application.DTOs.Job;
 using JobManagement.Application.Enums;
 using JobManagement.Application.Exceptions;
+using JobManagement.Application.Models.Email;
 using JobManagement.Application.Validations.Job;
 using JobManagement.Application.Validations.Sort;
 using JobManagement.Domain;
@@ -18,13 +20,16 @@ namespace JobManagement.Infrastructure.Services
     {
         private readonly IMapper _mapper;
         private readonly IJobRepository _jobRepository;
+        private readonly IEmailSender _emailSender;
 
-        public JobService(IJobRepository jobRepository, IMapper mapper, 
+        public JobService(IJobRepository jobRepository, IMapper mapper,
+            IEmailSender emailSender,
             UserManager<ApplicationUser> userManager, 
             CurrentUserService currentUserService) : base(userManager, currentUserService)
         {
             this._jobRepository = jobRepository;
             this._mapper = mapper;
+            this._emailSender = emailSender;
         }
 
 
@@ -106,6 +111,7 @@ namespace JobManagement.Infrastructure.Services
             var job = _mapper.Map<Job>(dto);
             job.CompanyId = companyId;
             job.CreatedAt = DateTime.Now;
+            job.PostedByUserId = _currentUserService.UserId;
 
             await _jobRepository.CreateAsync(job);
             return job.Id;
@@ -177,7 +183,7 @@ namespace JobManagement.Infrastructure.Services
             //Validate the dto
             var validator = new ChangeJobApprovalStatusValidator();
             var validationResult = await validator.ValidateAsync(dto);
-            
+
             if (validationResult.Errors.Any())
             {
                 throw new BadRequestException("Invalid job approval status. ", validationResult);
@@ -202,6 +208,25 @@ namespace JobManagement.Infrastructure.Services
 
             _mapper.Map(dto, job);
             await _jobRepository.UpdateAsync(job);
+
+
+            //Notify the user about job status change through email
+            var user = await _userManager.FindByIdAsync(job.PostedByUserId);
+
+            if (user != null && !string.IsNullOrEmpty(user.Email))
+            { 
+                await _emailSender.SendEmail(new EmailMessageData
+                {
+                    To = user.Email,
+                    Subject = "Job Posting Status Updated",
+                    Body = $"Hello {user.FirstName},\n\n" +
+                   $"The status of your job posting, {job.Title}, has been updated.\n" +
+                   $"New status: {job.ApprovalStatus}.\n" +
+                   "Please log in to the Job Management System to view the details of your job posting.\n\n" +
+                   "Thank you,\n" +
+                   "Job Management System"
+                });
+            }
         }  
 
 
@@ -225,6 +250,25 @@ namespace JobManagement.Infrastructure.Services
             {
                 // Admin can delete any job
                 await _jobRepository.DeleteAsync(job);
+
+
+                //Notify the user about job deletion by admin through email
+                var user = await _userManager.FindByIdAsync(job.PostedByUserId);
+
+                if (user != null && !string.IsNullOrEmpty(user.Email))
+                {
+                    await _emailSender.SendEmail(new EmailMessageData
+                    {
+                        To = user.Email,
+                        Subject = "Job Posting Deleted by Administrator",
+                        Body = $"Hello {user.FirstName},\n\n" +
+                       $"Your job posting, {job.Title}, has been deleted by an administrator from the Job Management System.\n" +
+                       "The job posting is no longer available in the system.\n" +
+                       "If you have any questions regarding this action, please contact the system administrator.\n\n" +
+                       "Thank you,\n" +
+                       "Job Management System"
+                    });
+                }
             }
 
 
