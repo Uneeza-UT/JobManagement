@@ -174,7 +174,7 @@ namespace JobManagement.Infrastructure.Services
 
 
             var jobApplication = _mapper.Map<JobApplication>(dto);
-            jobApplication.DateApplied = DateTime.Now;
+            jobApplication.DateApplied = DateTime.UtcNow;
             jobApplication.ApplicantId = _currentUserService.UserId;
 
 

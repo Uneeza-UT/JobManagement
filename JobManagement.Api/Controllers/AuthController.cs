@@ -46,6 +46,7 @@ namespace JobManagement.Api.Controllers
         [ProducesResponseType(404)]
         public async Task<ActionResult> ForgotPassword(ForgotPasswordRequest request)
         {
+            await _authenticationService.ForgotPassword(request);
             return Ok("A password reset link has been sent.");
         }
 
@@ -57,6 +58,7 @@ namespace JobManagement.Api.Controllers
         [ProducesResponseType(404)]
         public async Task<ActionResult> ResetPassword(ResetPasswordRequest request)
         {
+            await _authenticationService.ResetPassword(request);
             return Ok("Password has been reset successfully.");
         }
 
@@ -69,6 +71,7 @@ namespace JobManagement.Api.Controllers
         [ProducesResponseType(404)]
         public async Task<ActionResult> ChangePassword(ChangePasswordRequest request)
         {
+            await _authenticationService.ChangePassword(request);
             return Ok("Password has been changed successfully.");
         }
 

@@ -1,7 +1,6 @@
 ﻿using JobManagement.Application.Contracts.Email;
 using JobManagement.Application.Logging;
 using JobManagement.Application.Models.Email;
-using JobManagement.Infrastructure.Logging;
 using Microsoft.Extensions.Options;
 using Resend;
 

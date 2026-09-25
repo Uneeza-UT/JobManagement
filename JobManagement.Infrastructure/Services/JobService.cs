@@ -12,6 +12,7 @@ using JobManagement.Application.Validations.Sort;
 using JobManagement.Domain;
 using JobManagement.Identity.Models;
 using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.Design;
 
 
 namespace JobManagement.Infrastructure.Services
@@ -58,11 +59,12 @@ namespace JobManagement.Infrastructure.Services
             {
                 throw new ForbiddenException("You are not authorized to view jobs.");
             }
-            
 
+          
             var data = _mapper.Map<List<JobDto>>(jobs);
             return data;
         }
+
 
 
         // Retrieves a single job
@@ -86,6 +88,9 @@ namespace JobManagement.Infrastructure.Services
         //Only a user with "Company" role can create a job
         public async Task<int> CreateAsync(CreateJobDto dto)
         {
+            var companyId = await GetUserCompanyId();
+
+
             //Validate the dto
             var validator = new CreateJobValidator();
             var validationResult = await validator.ValidateAsync(dto);
@@ -97,9 +102,6 @@ namespace JobManagement.Infrastructure.Services
 
 
             // Ensure the company does not have more than 3 accepted jobs with the same title 
-
-            var companyId = await GetUserCompanyId();
-
             var jobsCount = await _jobRepository.CountActiveJobsWithSameTitleAsync(dto.Title, companyId);
 
             if (jobsCount >= 3)
@@ -110,7 +112,7 @@ namespace JobManagement.Infrastructure.Services
 
             var job = _mapper.Map<Job>(dto);
             job.CompanyId = companyId;
-            job.CreatedAt = DateTime.Now;
+            job.CreatedAt = DateTime.UtcNow;
             job.PostedByUserId = _currentUserService.UserId;
 
             await _jobRepository.CreateAsync(job);
@@ -161,7 +163,7 @@ namespace JobManagement.Infrastructure.Services
 
 
             _mapper.Map(dto, job);
-            job.UpdatedAt = DateTime.Now;
+            job.UpdatedAt = DateTime.UtcNow;
             await _jobRepository.UpdateAsync(job);
         }
 

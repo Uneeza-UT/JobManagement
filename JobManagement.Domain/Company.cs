@@ -14,4 +14,5 @@ public class Company : BaseEntity
     public string? Website { get; set; }
     public string OwnerUserId { get; set; }
     public ICollection<Job> Jobs { get; set; } = new List<Job>();
+    public ICollection<CompanyJoinRequest> CompanyJoinRequests { get; set; } = new List<CompanyJoinRequest>();
 }

@@ -19,12 +19,10 @@ public class CreateJobValidator : AbstractValidator<CreateJobDto>
 
 
         RuleFor(x => x.JobType)
-            .NotEmpty().WithMessage("Job type is required.")
             .IsInEnum().WithMessage("Allowed values: Remote, Hybrid, Onsite.");
 
 
         RuleFor(x => x.EmploymentType)
-            .NotEmpty().WithMessage("Employment type is required.")
             .IsInEnum().WithMessage("Allowed values: FullTime, PartTime, Contract, Internship, Temporary.");
 
 

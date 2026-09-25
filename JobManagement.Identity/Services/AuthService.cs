@@ -122,7 +122,7 @@ namespace JobManagement.Identity.Services
 
                 foreach(var err in result.Errors)
                 {
-                    errorString.AppendFormat(".{0)\n", err.Description);
+                    errorString.AppendFormat(".{0}\n", err.Description);
                 }
 
                 throw new BadRequestException($"{errorString}");
@@ -195,7 +195,7 @@ namespace JobManagement.Identity.Services
         public async Task ChangePassword(ChangePasswordRequest request)
         {
             var user = await _userManager.FindByIdAsync(_currentUserService.UserId);
-           
+
             if (user == null)
             {
                 throw new NotFoundException(nameof(ApplicationUser), _currentUserService.UserId);
@@ -244,10 +244,12 @@ namespace JobManagement.Identity.Services
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
 
-            var resetUrl =
-                $"{_frontendSettings.ResetPasswordUrl}" +
-                $"?email={Uri.EscapeDataString(user.Email!)}" +
-                $"&token={Uri.EscapeDataString(token)}";
+            //Url for full-stack job management application
+
+            //var resetUrl =
+            //$"{_frontendSettings.ResetPasswordUrl}" +
+            //$"?email={Uri.EscapeDataString(user.Email!)}" +
+            //$"&token={Uri.EscapeDataString(token)}";
 
 
             await _emailSender.SendEmail(new EmailMessageData
@@ -256,7 +258,7 @@ namespace JobManagement.Identity.Services
                 Subject = "Reset Your Password",
                 Body = $"Hello {user.FirstName},\n\n" +
                         "We received a request to reset your password.\n\n" +
-                        $"Reset your password using the following link:\n{resetUrl}\n\n" +
+                        $"Reset your password using the following token:\n{token}\n\n" +
                         "If you did not request a password reset, you can safely ignore this email.\n\n" +
                         "Thank you,\n" +
                         "Job Management System"

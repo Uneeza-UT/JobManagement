@@ -10,7 +10,6 @@ public interface ICompanyService : IGenericService
     Task<int> CreateAsync(CreateCompanyDto dto);
     Task UpdateAsync(UpdateCompanyDto dto);
     Task DeleteAsync(int id);
-    Task AssignCompanyToUserAsync(AssignCompanyToUserDto dto);
     Task<List<CompanyDto>> SearchAsync(SearchDto dto);
     Task<List<CompanyDto>> SortAsync(SortDto dto);
 }

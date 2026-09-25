@@ -1,6 +1,7 @@
 ﻿using JobManagement.Application.Contracts.Email;
 using JobManagement.Application.Contracts.Services;
 using JobManagement.Application.Logging;
+using JobManagement.Application.Models.Email;
 using JobManagement.Infrastructure.EmailService;
 using JobManagement.Infrastructure.Logging;
 using JobManagement.Infrastructure.Services;
@@ -19,12 +20,12 @@ public static class InfrastructureServiceRegistration
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, 
         IConfiguration configuration)
     {
-        
-        services.AddOptions();
+        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+
         services.AddHttpClient<ResendClient>();
         services.Configure<ResendClientOptions>(options =>
         {
-            options.ApiToken = configuration.GetValue<string>("Resend:ApiKey");
+            options.ApiToken = configuration.GetValue<string>("EmailSettings:ApiKey");
         });
 
         services.AddTransient<IResend, ResendClient>();
@@ -34,6 +35,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IJobService, JobService>();
         services.AddScoped<IJobApplicationService, JobApplicationService>();
         services.AddScoped<ICompanyService, CompanyService>();
+        services.AddScoped<ICompanyJoinRequestService, CompanyJoinRequestService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddHostedService<JobExpirationService>();
         services.AddHttpClient<IFileStorageService, FileStorageService>();

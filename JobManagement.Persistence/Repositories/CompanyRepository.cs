@@ -12,6 +12,17 @@ namespace JobManagement.Persistence.Repositories
         }
 
 
+        //Get the company entity using user id
+        public async Task<Company?> GetByUserIdAsync(string userId)
+        {
+            return await _dbContext.Set<Company>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(j => j.OwnerUserId == userId);
+        }
+
+
+
+
         // Retrieves company entities that match the search term across the specified string properties.
         public async Task<IReadOnlyList<Company>> SearchAsync(string searchTerm)
         {

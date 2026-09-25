@@ -121,7 +121,7 @@ namespace JobManagement.Api.Controllers
         [HttpGet("search")]
         [ProducesResponseType(404)]
         [ProducesDefaultResponseType]
-        public async Task<ActionResult<List<JobDto>>> Search(SearchDto dto)
+        public async Task<ActionResult<List<JobDto>>> Search([FromQuery] SearchDto dto)
         {
             var jobs = await _jobService.SearchAsync(dto);
             return jobs;
@@ -133,7 +133,7 @@ namespace JobManagement.Api.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesDefaultResponseType]
-        public async Task<ActionResult<List<JobDto>>> Sort(SortDto dto)
+        public async Task<ActionResult<List<JobDto>>> Sort([FromQuery] SortDto dto)
         {
             var jobs = await _jobService.SortAsync(dto);
             return jobs;

@@ -25,6 +25,7 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IJobRepository, JobRepository>();
         services.AddScoped<IJobApplicationRepository, JobApplicationRepository>();
         services.AddScoped<ICompanyRepository, CompanyRepository>();
+        services.AddScoped<ICompanyJoinRequestRepository, CompanyJoinRequestRepository>();
 
         return services;
     }

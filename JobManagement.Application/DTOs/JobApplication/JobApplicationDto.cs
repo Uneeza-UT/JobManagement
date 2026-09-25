@@ -18,6 +18,6 @@ public class JobApplicationDto
     public bool? HasDisability { get; set; }
     public JobApplicationStatus Status { get; set; }
     public int JobId { get; set; }
-    public int UserId { get; set; }
+    public string ApplicantId { get; set; }
     public DateTime DateApplied { get; set; }
 }

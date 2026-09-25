@@ -72,6 +72,24 @@ namespace JobManagement.Infrastructure.Services
             }
 
 
+            //Check if the user already owns a company
+            var userId = _currentUserService.UserId;
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                throw new NotFoundException(nameof(ApplicationUser), userId);
+            }
+
+
+            if (user.CompanyId.HasValue)
+            {
+                throw new ConflictException("You already have a registered company.");
+            }
+
+
+
             //Ensure that no other company is registered with the same email address
             bool isEmailUnique = await _companyRepository.IsCompanyEmailUniqueAsync(dto.Email);
 
@@ -82,21 +100,12 @@ namespace JobManagement.Infrastructure.Services
 
 
             var company = _mapper.Map<Company>(dto);
-            company.CreatedAt = DateTime.Now;
-
-            var userId = _currentUserService.UserId;
-
+            company.CreatedAt = DateTime.UtcNow;
             company.OwnerUserId = _currentUserService.UserId;
             await _companyRepository.CreateAsync(company);
 
 
-            // Link the user's Identity account to the company they registered           
-            var user = await _userManager.FindByIdAsync(userId);
-
-            if (user == null)
-            {
-                throw new NotFoundException(nameof(ApplicationUser), userId);
-            }
+            // Link the user's Identity account to the company they registered                      
 
             user.CompanyId = company.Id;
             await _userManager.UpdateAsync(user);
@@ -107,7 +116,7 @@ namespace JobManagement.Infrastructure.Services
 
 
         //Updates a company entity
-        //Only a user with "Company" role can update their own company
+        //Only a user with "Company" role and is the owner of that company can update their own company
         public async Task UpdateAsync(UpdateCompanyDto dto)
         {
             var company = await _companyRepository.GetByIdAsync(dto.Id);
@@ -119,9 +128,10 @@ namespace JobManagement.Infrastructure.Services
 
 
             // Ensure a user can only update their own company
-
-            string exceptionMessage = "You can only update your own company.";
-            await CheckUserAuthorization(dto.Id, exceptionMessage);
+            if (_currentUserService.UserId != company.OwnerUserId)
+            {
+                throw new ForbiddenException("Only the company owner can update the company");
+            }
 
 
 
@@ -146,14 +156,15 @@ namespace JobManagement.Infrastructure.Services
 
 
             _mapper.Map(dto, company);
-            company.UpdatedAt = DateTime.Now;
+            company.UpdatedAt = DateTime.UtcNow;
             await _companyRepository.UpdateAsync(company);
         }
 
 
 
+
         //Deletes a company entity
-        //Only a user with "Company" role can delete their own company
+        //Only a user with "Company" role and is the owner of that company can delete their own company
         public async Task DeleteAsync(int id)
         {
             var company = await _companyRepository.GetByIdAsync(id);
@@ -165,9 +176,11 @@ namespace JobManagement.Infrastructure.Services
 
 
             //Ensures the user can only delete their own company
+            if (_currentUserService.UserId != company.OwnerUserId)
+            {
+                throw new ForbiddenException("Only the company owners can delete the company");
+            }
 
-            string exceptionMessage = "You can only delete your own company.";
-            await CheckUserAuthorization(id, exceptionMessage);
 
             await _companyRepository.DeleteAsync(company);
 
@@ -191,30 +204,7 @@ namespace JobManagement.Infrastructure.Services
         }
 
 
-
-        // Associates the specified user with the company of the currently logged-in user
-        public async Task AssignCompanyToUserAsync(AssignCompanyToUserDto dto)
-        {
-            var companyId = await GetUserCompanyId();
-
-            var user = await _userManager.FindByIdAsync(dto.UserId);
-
-            if (user == null)
-            {
-                throw new NotFoundException(nameof(ApplicationUser), dto.UserId);
-            }
-
-
-            //Checks if the user is associated with a company
-            if (user.CompanyId != null)
-            {
-                throw new ForbiddenException("This user is already associated with a company.");
-            }
-
-            user.CompanyId = companyId;
-
-            await _userManager.UpdateAsync(user);
-        }
+        
 
 
         // Retrieves entities that match the specified search criteria.

@@ -14,6 +14,7 @@ namespace JobManagement.Persistence.DatabaseContext
         public DbSet<Job> Jobs { get; set; }
         public DbSet<JobApplication> JobApplications { get; set; }
         public DbSet<Company> Companies { get; set; }
+        public DbSet<CompanyJoinRequest> CompanyJoinRequests { get; set; }
 
 
         // Configures the Entity Framework Core model by applying

@@ -8,7 +8,6 @@ public class ChangeJobApplicationStatusValidator : AbstractValidator<ChangeJobAp
     public ChangeJobApplicationStatusValidator()
     {
         RuleFor(x => x.Status)
-            .NotEmpty().WithMessage("{PropertyName} is required.")
             .IsInEnum().WithMessage("Allowed values: Applied, Shortlisted, InterviewScheduled, Hired, Rejected.");
     }
 }

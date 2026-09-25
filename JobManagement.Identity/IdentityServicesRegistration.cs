@@ -29,9 +29,12 @@ namespace JobManagement.Identity
                         warnings.Ignore(RelationalEventId.PendingModelChangesWarning)));
 
 
-            services.AddIdentity<ApplicationUser, IdentityRole>()
-                .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
-                .AddDefaultTokenProviders();
+            services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+            })
+            .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
+            .AddDefaultTokenProviders();
 
 
             services.AddTransient<IAuthService, AuthService>();

@@ -17,4 +17,5 @@ public class JobDto
     public JobApprovalStatus ApprovalStatus { get; set; }
     public DateTime ApplicationDeadline { get; set; }
     public int CompanyId { get; set; }
+    public string PostedByUserId { get; set; }
 }

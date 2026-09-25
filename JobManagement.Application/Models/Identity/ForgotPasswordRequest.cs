@@ -2,5 +2,5 @@
 
 public class ForgotPasswordRequest
 {
-    public string Email { get; }
+    public string Email { get; set; }
 }
