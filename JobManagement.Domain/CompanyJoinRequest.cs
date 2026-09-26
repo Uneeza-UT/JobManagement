@@ -10,7 +10,7 @@ public class CompanyJoinRequest
     public string LastName { get; set; }
     public string Email { get; set; }
     public int CompanyId { get; set; }
-    public Company Company { get; set; }
+    public Company? Company { get; set; }
     public JoinRequestStatus Status { get; set; }
     public DateTime CreatedAt { get; set; }
 }

@@ -1,5 +1,4 @@
 ﻿using JobManagement.Application.Contracts.Persistence;
-using JobManagement.Application.DTOs.Common;
 using JobManagement.Domain;
 using JobManagement.Persistence.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +13,7 @@ namespace JobManagement.Persistence.Repositories
 
 
         // Retrieves job applications submitted by a particular student.
-        public async Task<List<JobApplication>> GetByUserIdAsync(string userId, int pageNumber = 1, int pageSize = 10)
+        public async Task<IReadOnlyList<JobApplication>> GetByUserIdAsync(string userId, int pageNumber = 1, int pageSize = 10)
         {
             int skip = (pageNumber - 1) * pageSize;
 
@@ -29,19 +28,30 @@ namespace JobManagement.Persistence.Repositories
 
 
 
-        // Retrieves job applications submitted for a particular job.
-        public async Task<List<JobApplication>> GetByJobIdAsync(int jobId, int pageNumber = 1, int pageSize = 10)
+        // Retrieves job applications submitted to a particular company.
+        public async Task<IReadOnlyList<JobApplication>> GetByCompanyIdAsync(int companyId, int pageNumber = 1, int pageSize = 10)
         {
             int skip = (pageNumber - 1) * pageSize;
 
             return await _dbContext.Set<JobApplication>()
                 .AsNoTracking()
                 .Where(j =>
-                    j.JobId == jobId)
+                    j.Job!.CompanyId == companyId)
                 .Skip(skip)
                 .Take(pageSize)
                 .ToListAsync();
         }
+
+
+        // Retrieves a job application including job entity.
+        public async Task<JobApplication?> GetByIdWithJobAsync(int id)
+        {
+            return await _dbContext.Set<JobApplication>()
+                .AsNoTracking()
+                .Include(j => j.Job)
+                .FirstOrDefaultAsync(j => j.Id == id);
+        }
+
 
 
         // Retrieves job application entities that match the search term across the specified string properties.

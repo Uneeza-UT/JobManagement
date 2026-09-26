@@ -11,6 +11,7 @@ using JobManagement.Application.Validations.JobApplication;
 using JobManagement.Application.Validations.Sort;
 using JobManagement.Domain;
 using JobManagement.Identity.Models;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 
 namespace JobManagement.Infrastructure.Services
@@ -41,78 +42,79 @@ namespace JobManagement.Infrastructure.Services
         //Retrieve the paginated list of all database entities
         public async Task<List<JobApplicationDto>> GetPagedAsync(PaginationDto dto)
         {
-            var jobApplications = await _jobApplicationRepository.GetPagedAsync(dto.PageNumber, dto.PageSize);
-            var data = _mapper.Map<List<JobApplicationDto>>(jobApplications);
-            return data;
-        }
-
-
-
-        // Retrieves applications for the student who is logged in
-        // or applications for a specific job owned by a company
-        public async Task<List<JobApplicationDto>> GetApplications(int? jobId, PaginationDto dto)
-        {
             IReadOnlyList<JobApplication> jobApplications = new List<JobApplication>();
 
+            var userId = _currentUserService.UserId;
             bool isStudent = await GetUserRole("Student");
             bool isCompany = await GetUserRole("Company");
 
             if (isStudent)
             {
-                if (jobId.HasValue)
-                {
-                    throw new BadRequestException(
-                        "Job Id should not be provided when retrieving a student's applications.");
-                }
-
-                //Retrieve all applications submitted by a particular student using user Id
-                jobApplications = await _jobApplicationRepository
-                   .GetByUserIdAsync(_currentUserService.UserId, dto.PageNumber, dto.PageSize);
+                jobApplications = await _jobApplicationRepository.GetByUserIdAsync(userId, dto.PageNumber, dto.PageSize);
             }
 
-            else if (isCompany && jobId.HasValue)
+            else if (isCompany)
             {
-                var job = await _jobRepository.GetByIdAsync(jobId.Value);
+                var companyId = await GetUserCompanyId();
 
-                if (job == null)
-                {
-                    throw new NotFoundException(nameof(Job), jobId.Value);
-                }
-
-
-                //Ensures only users associated with the job's company can view its applications
-
-                string exceptionMessage = "You can only view job applications submitted for jobs posted by your own company.";
-                await CheckUserAuthorization(job.CompanyId, exceptionMessage);
-
-
-                //Retrieve all applications submitted for a articular job using job Id
-                jobApplications = await _jobApplicationRepository.GetByJobIdAsync(jobId.Value, dto.PageNumber, dto.PageSize);
+                jobApplications = await _jobApplicationRepository.GetByCompanyIdAsync(companyId, dto.PageNumber, dto.PageSize);
             }
+
 
             else
             {
                 throw new ForbiddenException("You are not authorized to view job applications.");
             }
 
-
             var data = _mapper.Map<List<JobApplicationDto>>(jobApplications);
             return data;
-
         }
 
 
 
 
 
-        //Retrieve a single job application entity using the Id
+        //Retrieves a single job application based on the user role
+        //Students can only view their own applications
+        //Company users can view applications for the jobs posted by their own company
         public async Task<JobApplicationDto> GetByIdAsync(int id)
         {
-            var jobApplication = await _jobApplicationRepository.GetByIdAsync(id);
+            var userId = _currentUserService.UserId;
+            bool isStudent = await GetUserRole("Student");
+            bool isCompany = await GetUserRole("Company");
+
+
+            var jobApplication = await _jobApplicationRepository.GetByIdWithJobAsync(id);
 
             if (jobApplication == null)
             {
                 throw new NotFoundException(nameof(JobApplication), id);
+            }
+          
+
+            if (isStudent)
+            {
+                if (userId != jobApplication.ApplicantId)
+                {
+                    throw new ForbiddenException("You can only view your own job applications.");
+                }      
+            }
+
+            else if (isCompany)
+            {
+                var companyId = await GetUserCompanyId();
+
+
+                if (jobApplication.Job!.CompanyId != companyId)
+                {
+                    throw new ForbiddenException("You can only view job applications of your own company.");
+                }
+            }
+
+
+            else
+            {
+                throw new ForbiddenException("You are not authorized to view job applications.");
             }
 
 
@@ -123,18 +125,9 @@ namespace JobManagement.Infrastructure.Services
 
 
         //Creates a new job application entity
-        //Ensures only a user with "Student" role can apply for a job
+        //Only a user with "Student" role can apply for a job
         public async Task<int> CreateAsync(CreateJobApplicationDto dto)
         {
-            //Check if the applicant is a student
-            bool isStudent = await GetUserRole("Student");
-
-            if (!isStudent)
-            {
-                throw new ForbiddenException("Only students can apply for this job.");
-            }
-
-
             //Check that the specified job exists before creating the application
             var job = await _jobRepository.GetByIdWithCompanyAsync(dto.JobId);
 
@@ -280,6 +273,7 @@ namespace JobManagement.Infrastructure.Services
 
 
         //Deleted a job application entity
+        //Only people associated with the Company of the posted job have the authority to perform this task
         public async Task DeleteAsync(int id)
         {
             var jobApplication = await _jobApplicationRepository.GetByIdAsync(id);
@@ -299,7 +293,7 @@ namespace JobManagement.Infrastructure.Services
             }
 
 
-            //Ensure the company user owns the job  
+            //Ensure the company user is associated with the company that posted the job  
             string exceptionMessage = "Only users associated with the company who posted the job can delete the submitted applications.";
             await CheckUserAuthorization(job.CompanyId, exceptionMessage);
 

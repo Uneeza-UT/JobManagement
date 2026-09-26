@@ -1,11 +1,12 @@
 ﻿using AutoMapper;
 using JobManagement.Application.DTOs.CompanyJoinRequest;
+using JobManagement.Domain;
 
 namespace JobManagement.Application.MappingProfiles;
 
-public class CompanyJoinRequest : Profile
+public class CompanyJoinRequestProfile : Profile
 {
-    public CompanyJoinRequest()
+    public CompanyJoinRequestProfile()
     {
         CreateMap<CompanyJoinRequestDto, CompanyJoinRequest>().ReverseMap();
         CreateMap<CreateCompanyJoinRequestDto, CompanyJoinRequest>().ReverseMap();

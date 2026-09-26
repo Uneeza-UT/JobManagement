@@ -23,8 +23,6 @@ namespace JobManagement.Api.Controllers
 
         
         [HttpGet]
-        [ProducesResponseType(403)]
-        [ProducesResponseType(404)]
         public async Task<ActionResult<List<JobDto>>> Get([FromQuery] PaginationDto dto)
         {
             var jobs = await _jobService.GetPagedAsync(dto);

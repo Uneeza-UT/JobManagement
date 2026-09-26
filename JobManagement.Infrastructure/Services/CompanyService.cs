@@ -19,15 +19,17 @@ namespace JobManagement.Infrastructure.Services
     {
         private readonly IMapper _mapper;
         private readonly ICompanyRepository _companyRepository;
+        private readonly IUserService _userService;
         private readonly IEmailSender _emailSender;
 
         public CompanyService(ICompanyRepository companyRepository, IMapper mapper,
-            IEmailSender emailSender,
+            IUserService userService, IEmailSender emailSender,
             UserManager<ApplicationUser> userManager,
             ICurrentUserService currentUserService) : base(userManager, currentUserService)
         {
-            this._companyRepository = companyRepository;
             this._mapper = mapper;
+            this._companyRepository = companyRepository;
+            this._userService = userService;       
             this._emailSender = emailSender;
         }
 
@@ -185,6 +187,10 @@ namespace JobManagement.Infrastructure.Services
             await _companyRepository.DeleteAsync(company);
 
 
+            //Remove the company ID from all users belonging to the deleted company
+            await _userService.RemoveCompanyFromUsersAsync(id);
+
+
             //Notify the user about deletion of company profile through email
             var user = await _userManager.FindByIdAsync(company.OwnerUserId);
 
@@ -193,7 +199,7 @@ namespace JobManagement.Infrastructure.Services
                 await _emailSender.SendEmail(new EmailMessageData
                 {
                     To = user.Email,
-                    Subject = "Job Posting Status Updated",
+                    Subject = "Company Profile Deleted",
                     Body = $"Hello {user.FirstName},\n\n" +
                            $"Your company profile, {company.Name}, has been successfully deleted from the Job Management System.\n" +
                            "Your associated job postings and applications have not been deleted.\n\n" +

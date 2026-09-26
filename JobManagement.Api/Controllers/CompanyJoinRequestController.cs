@@ -22,8 +22,10 @@ namespace JobManagement.Api.Controllers
 
 
 
-        [Authorize(Roles = "Company")]
+        [Authorize(Roles = "Company, Student")]
         [HttpGet]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
         public async Task<ActionResult<List<CompanyJoinRequestDto>>> Get([FromQuery] PaginationDto dto)
         {
             var joinRequests = await _companyJoinRequestService.GetPagedAsync(dto);
@@ -43,8 +45,9 @@ namespace JobManagement.Api.Controllers
 
 
 
-        [Authorize(Roles = "Company")]
+        [Authorize(Roles = "Company, Student")]
         [HttpGet("{id}")]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         public async Task<ActionResult<CompanyJoinRequestDto>> Get(int id)
         {

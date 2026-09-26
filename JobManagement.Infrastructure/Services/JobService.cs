@@ -12,7 +12,6 @@ using JobManagement.Application.Validations.Sort;
 using JobManagement.Domain;
 using JobManagement.Identity.Models;
 using Microsoft.AspNetCore.Identity;
-using System.ComponentModel.Design;
 
 
 namespace JobManagement.Infrastructure.Services
@@ -34,40 +33,18 @@ namespace JobManagement.Infrastructure.Services
         }
 
 
-        // Retrieves jobs based on the user's role and applies pagination
+        // Retrieves all jobs and applies pagination
         public async Task<List<JobDto>> GetPagedAsync(PaginationDto dto)
         {
-            IReadOnlyList<Job> jobs = new List<Job>();
 
-            bool isAdmin = await GetUserRole("Administrator");
-            bool isCompany = await GetUserRole("Company");
-            bool isStudent = await GetUserRole("Student");
-
-            if (isAdmin || isStudent)
-            {
-                jobs = await _jobRepository.GetPagedAsync(dto.PageNumber, dto.PageSize);
-                
-            }
-           
-            else if (isCompany)
-            {
-                int companyId = await GetUserCompanyId();
-                jobs = await _jobRepository.GetByCompanyIdAsync(companyId, dto.PageNumber, dto.PageSize);
-            }
-
-            else
-            {
-                throw new ForbiddenException("You are not authorized to view jobs.");
-            }
-
-          
+            var jobs = await _jobRepository.GetPagedAsync(dto.PageNumber, dto.PageSize);          
             var data = _mapper.Map<List<JobDto>>(jobs);
             return data;
         }
 
 
 
-        // Retrieves a single job
+        // Retrieves a single job entity
         public async Task<JobDto> GetByIdAsync(int id)
         {
             var job = await _jobRepository.GetByIdAsync(id);

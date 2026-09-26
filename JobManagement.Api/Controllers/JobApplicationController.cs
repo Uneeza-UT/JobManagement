@@ -22,9 +22,11 @@ namespace JobManagement.Api.Controllers
 
 
 
-        [HttpGet("get-all")]
         [Authorize(Roles = "Student, Company")]
-        public async Task<ActionResult<List<JobApplicationDto>>> GetAll([FromQuery] PaginationDto dto)
+        [HttpGet]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult<List<JobApplicationDto>>> Get([FromQuery] PaginationDto dto)
         {
             var jobApplications = await _jobApplicationService.GetPagedAsync(dto);
 
@@ -43,38 +45,16 @@ namespace JobManagement.Api.Controllers
 
 
 
-
-        [HttpGet]
         [Authorize(Roles = "Student, Company")]
+        [HttpGet("{id}")]      
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        public async Task<ActionResult<List<JobApplicationDto>>> Get([FromQuery] int? jobId, [FromQuery] PaginationDto dto)
-        {
-            var jobApplications = await _jobApplicationService.GetApplications(jobId, dto);
-
-            if (jobApplications == null || jobApplications.Count == 0)
-            {
-                return Ok(new
-                {
-                    message = "No job applications found for the requested page.",
-                    data = new List<JobApplicationDto>()
-                });
-            }
-
-            return Ok(jobApplications);
-        }
-
-
-
-
-        [HttpGet("{id}")]
-        [Authorize(Roles = "Student, Company")]
-        [ProducesResponseType(404)]
-        public async Task<ActionResult<JobApplicationDto>> GetById(int id)
+        public async Task<ActionResult<JobApplicationDto>> Get(int id)
         {
             var jobApplication = await _jobApplicationService.GetByIdAsync(id);
             return Ok(jobApplication);
         }
+
 
 
 
@@ -85,7 +65,7 @@ namespace JobManagement.Api.Controllers
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [ProducesResponseType(409)]
-        public async Task<ActionResult> Post([FromBody] CreateJobApplicationDto dto)
+        public async Task<ActionResult> Post([FromForm] CreateJobApplicationDto dto)
         {
             var response = await _jobApplicationService.CreateAsync(dto);
             return CreatedAtAction(nameof(Get), new { id = response });

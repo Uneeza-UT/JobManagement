@@ -35,25 +35,43 @@ namespace JobManagement.Infrastructure.Services
         }
 
 
-        //Retrieve the paginated list of all company join requests sent to the company owner by a user
-        //This list is only visible to the company owner
+        //Retrieve the paginated list of all company join requests based on the user role
+        //This list is only visible to the company owners and the users who applied for the request
         public async Task<List<CompanyJoinRequestDto>> GetPagedAsync(PaginationDto dto)
         {
-            //Check if the user is the owner of a company
+            IReadOnlyList<CompanyJoinRequest> companyJoinRequests = new List<CompanyJoinRequest>();
+
+            bool isStudent = await GetUserRole("Student");
+            bool isCompany = await GetUserRole("Company");
             var userId = _currentUserService.UserId;
 
-            var company = await _companyRepository.GetByUserIdAsync(userId);
 
-
-            if (company == null)
+            if (isStudent)
             {
-                throw new NotFoundException(nameof(Company), "You do not own a company.");
+                companyJoinRequests = await _companyJoinRequestRepository
+                    .GetByUserIdAsync(userId, dto.PageNumber, dto.PageSize);
             }
 
+            else if (isCompany)
+            {
+                //Check if the user is the owner of a company
+                var company = await _companyRepository.GetByUserIdAsync(userId);
 
-            var companyJoinRequests = await _companyJoinRequestRepository
-                .GetJoinRequestsByCompanyIdAsync(company.Id, dto.PageNumber, dto.PageSize);
 
+                if (company == null)
+                {
+                    throw new NotFoundException(nameof(Company), "You do not own a company.");
+                }
+
+                companyJoinRequests = await _companyJoinRequestRepository
+                    .GetByCompanyIdAsync(company.Id, dto.PageNumber, dto.PageSize);
+            }
+
+            else
+            {
+                throw new ForbiddenException("You are not authorized to view company join requests.");
+            }
+            
 
             var data = _mapper.Map<List<CompanyJoinRequestDto>>(companyJoinRequests);
             return data;
@@ -62,14 +80,53 @@ namespace JobManagement.Infrastructure.Services
 
 
         //Retrieve a single company join requests
+        //Ensures the user can only get his own requests
+        //Ensures only the company owner can view the request sent to a company
         public async Task<CompanyJoinRequestDto> GetByIdAsync(int id)
         {
+            bool isStudent = await GetUserRole("Student");
+            bool isCompany = await GetUserRole("Company");
+            var userId = _currentUserService.UserId;
+
+
             var joinRequest = await _companyJoinRequestRepository.GetByIdAsync(id);
 
             if (joinRequest == null)
             {
                 throw new NotFoundException(nameof(CompanyJoinRequest), id);
             }
+
+
+            if (isStudent)
+            {
+                if (joinRequest.UserId != userId)
+                {
+                    throw new ForbiddenException("You can only view you own join requests.");
+                }
+            }
+
+            else if (isCompany)
+            {
+                //Check if the user is the owner of a company
+                var company = await _companyRepository.GetByUserIdAsync(userId);
+
+
+                if (company == null)
+                {
+                    throw new NotFoundException(nameof(Company), "You do not own a company.");
+                }
+
+                if (joinRequest.CompanyId != company.Id)
+                {
+                    throw new ForbiddenException("You can only view you own company's join requests.");
+                }
+            }
+
+            else
+            {
+                throw new ForbiddenException("You are not authorized to view company join requests.");
+            }
+
 
             var data = _mapper.Map<CompanyJoinRequestDto>(joinRequest);
             return data;
@@ -80,7 +137,6 @@ namespace JobManagement.Infrastructure.Services
 
         public async Task<int> CreateAsync(CreateCompanyJoinRequestDto dto)
         {
-
             //Check if the comany exists
             var company = await _companyRepository.GetByIdAsync(dto.CompanyId);
 
@@ -105,6 +161,16 @@ namespace JobManagement.Infrastructure.Services
             {
                 throw new ConflictException("You are already part of a company.");
             }
+
+
+            //Check for duplicate request to the same company
+            bool existsJoinRequest = await _companyJoinRequestRepository.ExistsPendingRequest(dto.CompanyId, userId);
+
+            if (existsJoinRequest)
+            {
+                throw new ConflictException("You already have a pending request to join this company.");
+            }
+
 
 
             //Validate the dto

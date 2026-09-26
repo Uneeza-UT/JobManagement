@@ -1,5 +1,4 @@
 ﻿using JobManagement.Application.Contracts.Persistence;
-using JobManagement.Application.DTOs.Job;
 using JobManagement.Domain;
 using JobManagement.Domain.Enums;
 using JobManagement.Persistence.DatabaseContext;

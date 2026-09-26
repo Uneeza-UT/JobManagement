@@ -1,5 +1,6 @@
 ﻿using JobManagement.Application.Contracts.Persistence;
 using JobManagement.Domain;
+using JobManagement.Domain.Enums;
 using JobManagement.Persistence.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,14 +14,40 @@ namespace JobManagement.Persistence.Repositories
         }
 
 
+        //Get all requests sent by a user
+        public async Task<IReadOnlyList<CompanyJoinRequest>> GetByUserIdAsync(string userId, int pageNumber = 1, int pageSize = 10)
+        {
+            return await _dbContext.Set<CompanyJoinRequest>()
+               .AsNoTracking()
+               .Where(j => j.UserId == userId)
+               .ToListAsync();
+        }
+
+
+
         //Get all requests sent to a company
-        public async Task<IReadOnlyList<CompanyJoinRequest>> GetJoinRequestsByCompanyIdAsync(int companyId, int pageNumber = 1, int pageSize = 10)
+        public async Task<IReadOnlyList<CompanyJoinRequest>> GetByCompanyIdAsync(int companyId, int pageNumber = 1, int pageSize = 10)
         {
             return await _dbContext.Set<CompanyJoinRequest>()
                .AsNoTracking()
                .Where(j => j.CompanyId == companyId)
                .ToListAsync();
         }
+
+
+
+
+
+        //Check if the request already exists for the same company
+        public async Task<bool> ExistsPendingRequest(int companyId, string userId)
+        {
+            return await _dbContext.CompanyJoinRequests
+                .AnyAsync(j => 
+                    j.UserId == userId &&
+                    j.CompanyId == companyId && 
+                    j.Status == JoinRequestStatus.Pending);
+        }
+
 
 
 
@@ -35,5 +62,6 @@ namespace JobManagement.Persistence.Repositories
                     j.Email.Contains(searchTerm))
                 .ToListAsync();
         }
+
     }
 }
