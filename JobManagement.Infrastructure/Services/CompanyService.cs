@@ -248,7 +248,7 @@ namespace JobManagement.Infrastructure.Services
 
             if (validationResult.Errors.Any())
             {
-                throw new BadRequestException("Invalid search term. ", validationResult);
+                throw new BadRequestException("Invalid sort option. ", validationResult);
             }
 
 

@@ -19,7 +19,7 @@ public class CreateJobApplicationValidator : AbstractValidator<CreateJobApplicat
 
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("{PropertyName} is required.")
-            .EmailAddress()
+            .Matches(@"^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$").WithMessage("{PropertyName} must be a valid email address.")
             .MaximumLength(500).WithMessage("{PropertyName} cannot exceed 500 characters.");
 
 

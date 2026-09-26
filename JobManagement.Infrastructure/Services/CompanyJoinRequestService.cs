@@ -13,6 +13,7 @@ using JobManagement.Domain;
 using JobManagement.Domain.Enums;
 using JobManagement.Identity.Models;
 using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.Design;
 
 namespace JobManagement.Infrastructure.Services
 {
@@ -230,7 +231,7 @@ namespace JobManagement.Infrastructure.Services
         // Accepts or rejects a company join request and notifies the requesting user
         //Only the company owner can perform this task
         public async Task AcceptJoinRequestAsync(ChangeCompanyJoinRequestStatusDto dto)
-        {
+        {      
             //Validate the dto
             var validator = new ChangeCompanyJoinRequestStatusValidator();
             var validationResult = await validator.ValidateAsync(dto);
@@ -246,6 +247,20 @@ namespace JobManagement.Infrastructure.Services
             if (joinRequest == null)
             {
                 throw new NotFoundException(nameof(CompanyJoinRequest), dto.Id);
+            }
+
+
+            //Check if the user already belongs to a company
+            var user = await _userManager.FindByIdAsync(joinRequest.UserId);
+
+            if (user == null)
+            {
+                throw new NotFoundException(nameof(ApplicationUser), joinRequest.UserId);
+            }
+
+            if (dto.Status == JoinRequestStatus.Accepted && user.CompanyId != null)
+            {
+                throw new ConflictException("This user already belongs to another company.");
             }
 
 
@@ -270,12 +285,7 @@ namespace JobManagement.Infrastructure.Services
             await _companyJoinRequestRepository.UpdateAsync(joinRequest);
         
            
-            var user = await _userManager.FindByIdAsync(joinRequest.UserId);
-
-            if (user == null)
-            {
-                throw new NotFoundException(nameof(ApplicationUser), joinRequest.UserId);
-            }
+            
 
 
             //Update compayId of the user who requested to join the company
@@ -283,6 +293,7 @@ namespace JobManagement.Infrastructure.Services
             if (dto.Status == JoinRequestStatus.Accepted)
             {
                 user.CompanyId = company.Id;
+                await _userManager.UpdateAsync(user);
             }
 
 
@@ -340,9 +351,17 @@ namespace JobManagement.Infrastructure.Services
 
 
 
-        // Retrieves entities that match the specified search criteria.
+        //Retrieves entities that match the specified search criteria
+        //Students can only search their own requests
+        //Company users can search requests for their own company
         public async Task<List<CompanyJoinRequestDto>> SearchAsync(SearchDto dto)
         {
+            IReadOnlyList<CompanyJoinRequest> joinRequests;
+
+            var userId = _currentUserService.UserId;
+            bool isStudent = await GetUserRole("Student");
+            bool isCompany = await GetUserRole("Company");
+
             var searchTerm = dto.SearchTerm?.Trim();
 
             if (string.IsNullOrEmpty(searchTerm))
@@ -351,7 +370,25 @@ namespace JobManagement.Infrastructure.Services
                 return await GetPagedAsync(new PaginationDto());
             }
 
-            var joinRequests = await _companyJoinRequestRepository.SearchAsync(searchTerm);
+
+            if (isStudent)
+            {
+                joinRequests = await _companyJoinRequestRepository.SearchForUserAsync(searchTerm, userId);
+            }
+
+            else if (isCompany)
+            {
+                var companyId = await GetUserCompanyId();
+
+                joinRequests = await _companyJoinRequestRepository.SearchForCompanyAsync(searchTerm, companyId);
+            }
+
+
+            else
+            {
+                throw new ForbiddenException("You are not authorized to view company's join requests.");
+            }
+
 
             return _mapper.Map<List<CompanyJoinRequestDto>>(joinRequests);
         }
@@ -359,47 +396,80 @@ namespace JobManagement.Infrastructure.Services
 
 
 
-        // Retrieves entities sorted according to the specified sort option.
+        //Retrieves entities sorted according to the specified sort option
+        //Students can only sort their own requests
+        //Company users can sort requests for their own company
         public async Task<List<CompanyJoinRequestDto>> SortAsync(SortDto dto)
         {
+            var userId = _currentUserService.UserId;
+            int companyId = 0;
+            bool isStudent = await GetUserRole("Student");
+            bool isCompany = await GetUserRole("Company");
+
+
             //Validate the dto
             var validator = new SortValidator();
             var validationResult = await validator.ValidateAsync(dto);
 
             if (validationResult.Errors.Any())
             {
-                throw new BadRequestException("Invalid search term. ", validationResult);
+                throw new BadRequestException("Invalid sort option. ", validationResult);
+            }
+
+            if (isCompany)
+            {
+                companyId = await GetUserCompanyId();
             }
 
 
-            IReadOnlyList<CompanyJoinRequest> data;
+            IReadOnlyList<CompanyJoinRequest> joinRequests;
 
             switch (dto.SortBy)
             {
                 case SortOption.Ascending:
-                    data = await _companyJoinRequestRepository.SortAsync(false, x => x.FirstName);
+                    joinRequests = await _companyJoinRequestRepository.SortJoinRequestsAsync(
+                        false,
+                        x => x.FirstName,
+                        isStudent ? userId : null,
+                        isCompany ? companyId : null);
+
                     break;
 
                 case SortOption.Descending:
-                    data = await _companyJoinRequestRepository.SortAsync(true, x => x.FirstName);
+                    joinRequests = await _companyJoinRequestRepository.SortJoinRequestsAsync(
+                        true,
+                        x => x.FirstName,
+                        isStudent ? userId : null,
+                        isCompany ? companyId : null);
+
                     break;
 
                 case SortOption.Latest:
-                    data = await _companyJoinRequestRepository.SortAsync(true, x => x.CreatedAt);
+                    joinRequests = await _companyJoinRequestRepository.SortJoinRequestsAsync(
+                        true,
+                        x => x.CreatedAt,
+                        isStudent ? userId : null,
+                        isCompany ? companyId : null);
+
                     break;
 
                 case SortOption.Oldest:
-                    data = await _companyJoinRequestRepository.SortAsync(false, x => x.CreatedAt);
+                    joinRequests = await _companyJoinRequestRepository.SortJoinRequestsAsync(
+                        false,
+                        x => x.CreatedAt,
+                        isStudent ? userId : null,
+                        isCompany ? companyId : null);
+
                     break;
 
                 default:
                     throw new ArgumentOutOfRangeException(
                     nameof(dto.SortBy),
                     dto.SortBy,
-                    "Invalid sort option.");
+                    "Invalid sort option");
             }
 
-            return _mapper.Map<List<CompanyJoinRequestDto>>(data);
+            return _mapper.Map<List<CompanyJoinRequestDto>>(joinRequests);
         }
     }
 }

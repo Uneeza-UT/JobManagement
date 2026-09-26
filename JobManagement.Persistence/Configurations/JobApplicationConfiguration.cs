@@ -10,10 +10,6 @@ namespace JobManagement.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<JobApplication> builder)
         {
-            builder.HasIndex(x => x.Email)
-                .IsUnique();
-
-
             // Prevent a user from submitting multiple applications
             // for the same job.
 

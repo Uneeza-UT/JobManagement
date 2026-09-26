@@ -12,8 +12,8 @@ using JobManagement.Application.Validations.Sort;
 using JobManagement.Domain;
 using JobManagement.Domain.Enums;
 using JobManagement.Identity.Models;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.Design;
 
 namespace JobManagement.Infrastructure.Services
 {
@@ -41,6 +41,8 @@ namespace JobManagement.Infrastructure.Services
 
 
         //Retrieve the paginated list of all database entities
+        //Students can only view their own applications
+        //Company users can view applications for the jobs posted by their own company
         public async Task<List<JobApplicationDto>> GetPagedAsync(PaginationDto dto)
         {
             IReadOnlyList<JobApplication> jobApplications = new List<JobApplication>();
@@ -198,11 +200,11 @@ namespace JobManagement.Infrastructure.Services
             //Notify the user about successful submittion of their job application through email
             var user = await _userManager.FindByIdAsync(jobApplication.ApplicantId);
 
-            if (user != null && !string.IsNullOrEmpty(user.Email))
+            if (user != null)
             {
                 await _emailSender.SendEmail(new EmailMessageData
                 {
-                    To = user.Email,
+                    To = dto.Email,
                     Subject = "Application Submitted Successfully",
                     Body = $"Hello {user.FirstName},\n\n" +
                            $"Your application for {job.Title} at {job.Company.Name} has been successfully submitted.\n" +
@@ -262,11 +264,11 @@ namespace JobManagement.Infrastructure.Services
 
             var user = await _userManager.FindByIdAsync(jobApplication.ApplicantId);
 
-            if (user != null && !string.IsNullOrEmpty(user.Email))
+            if (user != null)
             {
                 await _emailSender.SendEmail(new EmailMessageData
                 {
-                    To = user.Email,
+                    To = jobApplication.Email,
                     Subject = "Application Status Updated",
                     Body = $"Hello {user.FirstName},\n\n" +
                            $"The status of your application for {job.Title} at {job.Company.Name} has been updated.\n" +
@@ -311,9 +313,17 @@ namespace JobManagement.Infrastructure.Services
 
 
 
-        // Retrieves entities that match the specified search criteria.
+        // Retrieves entities that match the specified search criteria
+        //Students can only search their own applications
+        //Company users can search applications for the jobs posted by their own company
         public async Task<List<JobApplicationDto>> SearchAsync(SearchDto dto)
         {
+            IReadOnlyList<JobApplication> jobApplications;
+
+            var userId = _currentUserService.UserId;
+            bool isStudent = await GetUserRole("Student");
+            bool isCompany = await GetUserRole("Company");
+
             var searchTerm = dto.SearchTerm?.Trim();
 
             if (string.IsNullOrEmpty(searchTerm))
@@ -321,8 +331,26 @@ namespace JobManagement.Infrastructure.Services
                 // Return all entities without filtering
                 return await GetPagedAsync(new PaginationDto());
             }
+      
 
-            var jobApplications = await _jobApplicationRepository.SearchAsync(searchTerm);
+            if (isStudent)
+            {
+                jobApplications = await _jobApplicationRepository.SearchForUserAsync(searchTerm, userId);
+            }
+
+            else if (isCompany)
+            {
+                var companyId = await GetUserCompanyId();
+
+                jobApplications = await _jobApplicationRepository.SearchForCompanyAsync(searchTerm, companyId);
+            }
+
+
+            else
+            {
+                throw new ForbiddenException("You are not authorized to view job applications.");
+            }
+
 
             return _mapper.Map<List<JobApplicationDto>>(jobApplications);
         }
@@ -330,37 +358,70 @@ namespace JobManagement.Infrastructure.Services
 
 
 
-        // Retrieves entities sorted according to the specified sort option.
+        // Retrieves entities sorted according to the specified sort option
+        //Students can only sort their own applications
+        //Company users can sort applications for the jobs posted by their own company
         public async Task<List<JobApplicationDto>> SortAsync(SortDto dto)
         {
+            var userId = _currentUserService.UserId;
+            int companyId = 0;
+            bool isStudent = await GetUserRole("Student");
+            bool isCompany = await GetUserRole("Company");
+
             //Validate the dto
             var validator = new SortValidator();
             var validationResult = await validator.ValidateAsync(dto);
 
             if (validationResult.Errors.Any())
             {
-                throw new BadRequestException("Invalid search term. ", validationResult);
+                throw new BadRequestException("Invalid sort option. ", validationResult);
             }
 
 
-            IReadOnlyList<JobApplication> data;
+            if (isCompany)
+            {
+                companyId = await GetUserCompanyId();
+            }
+
+
+            IReadOnlyList<JobApplication> jobApplications;
 
             switch (dto.SortBy)
             {
                 case SortOption.Ascending:
-                    data = await _jobApplicationRepository.SortAsync(false, x => x.FirstName);
+                    jobApplications = await _jobApplicationRepository.SortJobApplicationsAsync(
+                        false,
+                        x => x.FirstName,
+                        isStudent ? userId : null,
+                        isCompany ? companyId : null);
+
                     break;
 
                 case SortOption.Descending:
-                    data = await _jobApplicationRepository.SortAsync(true, x => x.FirstName);
+                    jobApplications = await _jobApplicationRepository.SortJobApplicationsAsync(
+                        true,
+                        x => x.FirstName,
+                        isStudent ? userId : null,
+                        isCompany ? companyId : null);
+                   
                     break;
 
                 case SortOption.Latest:
-                    data = await _jobApplicationRepository.SortAsync(true, x => x.DateApplied);
+                    jobApplications = await _jobApplicationRepository.SortJobApplicationsAsync(
+                        true,
+                        x => x.DateApplied,
+                        isStudent ? userId : null,
+                        isCompany ? companyId : null);
+                    
                     break;
 
                 case SortOption.Oldest:
-                    data = await _jobApplicationRepository.SortAsync(false, x => x.DateApplied);
+                    jobApplications = await _jobApplicationRepository.SortJobApplicationsAsync(
+                        false,
+                        x => x.DateApplied,
+                        isStudent ? userId : null,
+                        isCompany ? companyId : null);
+                    
                     break;
 
                 default:
@@ -369,8 +430,9 @@ namespace JobManagement.Infrastructure.Services
                     dto.SortBy,
                     "Invalid sort option");
             }
+            
 
-            return _mapper.Map<List<JobApplicationDto>>(data);
+            return _mapper.Map<List<JobApplicationDto>>(jobApplications);
         }    
 
     }

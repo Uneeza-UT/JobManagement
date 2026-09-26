@@ -107,8 +107,8 @@ namespace JobManagement.Api.Controllers
 
 
 
+        [Authorize(Roles = "Student, Company")]
         [HttpGet("search")]
-        [ProducesResponseType(404)]
         [ProducesDefaultResponseType]
         public async Task<ActionResult<List<JobApplicationDto>>> Search([FromQuery] SearchDto dto)
         {
@@ -118,9 +118,9 @@ namespace JobManagement.Api.Controllers
 
 
 
+        [Authorize(Roles = "Student, Company")]
         [HttpGet("sort")]
         [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
         [ProducesDefaultResponseType]
         public async Task<ActionResult<List<JobApplicationDto>>> Sort([FromQuery] SortDto dto)
         {

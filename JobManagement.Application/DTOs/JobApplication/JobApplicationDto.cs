@@ -13,7 +13,7 @@ public class JobApplicationDto
     public string Address { get; set; }
     public Gender? Gender { get; set; }
     public DateTime? BirthDate { get; set; }
-    public string? ApplicationDocument { get; set; }
+    public string? ApplicationDocumentKey { get; set; }
     public string? CNIC { get; set; }
     public bool? HasDisability { get; set; }
     public JobApplicationStatus Status { get; set; }

@@ -30,7 +30,7 @@ public static class InfrastructureServiceRegistration
 
         services.AddTransient<IResend, ResendClient>();
         services.AddTransient<IEmailSender, EmailSender>();
-        services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
+        services.AddSingleton(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
         services.AddScoped<IGenericService, GenericService>();
         services.AddScoped<IJobService, JobService>();
         services.AddScoped<IJobApplicationService, JobApplicationService>();

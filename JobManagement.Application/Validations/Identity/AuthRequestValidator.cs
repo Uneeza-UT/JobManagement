@@ -9,7 +9,7 @@ public class AuthRequestValidator : AbstractValidator<AuthRequest>
     {
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("{PropertyName} is required.")
-            .EmailAddress();
+            .Matches(@"^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$").WithMessage("{PropertyName} must be a valid email address.");
 
 
         RuleFor(x => x.Password)

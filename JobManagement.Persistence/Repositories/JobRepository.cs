@@ -73,8 +73,8 @@ namespace JobManagement.Persistence.Repositories
         {
             var jobs = await _dbContext.Jobs
                 .Where(x =>
-                    x.ApplicationDeadline <= DateTime.UtcNow &&
-                    x.ApprovalStatus == JobApprovalStatus.Pending)
+                    x.ApplicationDeadline <= DateTime.Now &&
+                    x.ApprovalStatus != JobApprovalStatus.Expired)
                 .ToListAsync();
 
             foreach (var job in jobs)
