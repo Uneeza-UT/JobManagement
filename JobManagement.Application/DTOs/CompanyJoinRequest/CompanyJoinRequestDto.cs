@@ -9,4 +9,5 @@ public class CompanyJoinRequestDto
     public string LastName { get; set; }
     public string Email { get; set; }
     public JoinRequestStatus Status { get; set; }
+    public int CompanyId { get; set; }
 }

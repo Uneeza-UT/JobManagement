@@ -10,6 +10,7 @@ using JobManagement.Application.Models.Email;
 using JobManagement.Application.Validations.JobApplication;
 using JobManagement.Application.Validations.Sort;
 using JobManagement.Domain;
+using JobManagement.Domain.Enums;
 using JobManagement.Identity.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
@@ -137,13 +138,20 @@ namespace JobManagement.Infrastructure.Services
             }
 
 
+            // Ensure the job status is Accepted
+            if (job.ApprovalStatus != JobApprovalStatus.Accepted)
+            {
+                throw new BadRequestException(
+                    "You cannot apply for this job because it has not been accepted by the administrator.");
+            }
+
+
             // Ensure the application deadline has not already passed
             if (job.ApplicationDeadline <= DateTime.Now)
             {
                 throw new BadRequestException(
                     "You cannot apply for this job because its application deadline has passed.");
             }
-
 
 
             //Validate the dto

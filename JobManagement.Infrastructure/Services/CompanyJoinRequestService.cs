@@ -10,6 +10,7 @@ using JobManagement.Application.Models.Email;
 using JobManagement.Application.Validations.CompanyJoinRequest;
 using JobManagement.Application.Validations.Sort;
 using JobManagement.Domain;
+using JobManagement.Domain.Enums;
 using JobManagement.Identity.Models;
 using Microsoft.AspNetCore.Identity;
 
@@ -60,7 +61,7 @@ namespace JobManagement.Infrastructure.Services
 
                 if (company == null)
                 {
-                    throw new NotFoundException(nameof(Company), "You do not own a company.");
+                    throw new NotFoundException(nameof(Company), "You do not own a company");
                 }
 
                 companyJoinRequests = await _companyJoinRequestRepository
@@ -101,7 +102,7 @@ namespace JobManagement.Infrastructure.Services
             {
                 if (joinRequest.UserId != userId)
                 {
-                    throw new ForbiddenException("You can only view you own join requests.");
+                    throw new ForbiddenException("You can only view your own join requests.");
                 }
             }
 
@@ -113,12 +114,12 @@ namespace JobManagement.Infrastructure.Services
 
                 if (company == null)
                 {
-                    throw new NotFoundException(nameof(Company), "You do not own a company.");
+                    throw new ForbiddenException("You do not own a company.");
                 }
 
                 if (joinRequest.CompanyId != company.Id)
                 {
-                    throw new ForbiddenException("You can only view you own company's join requests.");
+                    throw new ForbiddenException("You can only view your own company's join requests.");
                 }
             }
 
@@ -255,7 +256,7 @@ namespace JobManagement.Infrastructure.Services
 
             if (company == null)
             {
-                throw new NotFoundException(nameof(Company), "You do not own a company.");
+                throw new ForbiddenException("You do not own a company.");
             }
 
 
@@ -267,13 +268,26 @@ namespace JobManagement.Infrastructure.Services
 
             _mapper.Map(dto, joinRequest);
             await _companyJoinRequestRepository.UpdateAsync(joinRequest);
+        
+           
+            var user = await _userManager.FindByIdAsync(joinRequest.UserId);
 
+            if (user == null)
+            {
+                throw new NotFoundException(nameof(ApplicationUser), joinRequest.UserId);
+            }
+
+
+            //Update compayId of the user who requested to join the company
+
+            if (dto.Status == JoinRequestStatus.Accepted)
+            {
+                user.CompanyId = company.Id;
+            }
 
 
             //Notify the user about the status of their join request through email
-            var user = await _userManager.FindByIdAsync(joinRequest.UserId);
-
-            if (user != null && !string.IsNullOrEmpty(user.Email))
+            if (!string.IsNullOrEmpty(user.Email))
             {
                 await _emailSender.SendEmail(new EmailMessageData
                 {
@@ -310,7 +324,7 @@ namespace JobManagement.Infrastructure.Services
 
             if (company == null)
             {
-                throw new NotFoundException(nameof(Company), "You do not own a company.");
+                throw new ForbiddenException("You do not own a company.");
             }
 
 

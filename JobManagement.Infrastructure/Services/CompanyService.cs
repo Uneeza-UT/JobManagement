@@ -87,7 +87,14 @@ namespace JobManagement.Infrastructure.Services
 
             if (user.CompanyId.HasValue)
             {
-                throw new ConflictException("You already have a registered company.");
+                var getCompany = await _companyRepository.GetByIdAsync(user.CompanyId.Value);
+
+                if (getCompany.OwnerUserId == userId)
+                {
+                    throw new ConflictException("You already have a registered company.");
+                }
+
+                throw new ConflictException("You are already associated with a company and cannot create your own company.");
             }
 
 
