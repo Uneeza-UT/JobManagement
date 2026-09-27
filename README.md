@@ -94,6 +94,8 @@ A RESTful ASP.NET Core Web API for managing job and internship postings, compani
 
 The project follows Clean Architecture principles:
 
+
+```text
 JobManagement
 │
 ├── API
@@ -140,7 +142,7 @@ JobManagement
         ├── Repositories
         └── Configurations
 
-
+```
 
 
 
@@ -190,6 +192,7 @@ Before running the application, configure the following settings:
 - Supabase API key
 
 
+```json
 {
   "ConnectionStrings": {
     "DefaultConnection": "your-sql-server-connection-string"
@@ -207,6 +210,7 @@ Before running the application, configure the following settings:
     "ApiKey": "your-supabase-api-key"
   }
 }
+```
 
 Sensitive values such as API keys should be configured using .NET User Secrets or environment variables rather than committed to the repository.
 In this project, the Supabase API key is stored outside `appsettings.json` using .NET configuration secrets.
@@ -280,7 +284,7 @@ The API is documented using Swagger/OpenAPI.
 
 Once the application is running, open the Swagger UI at:
 
-https://localhost:<port>/swagger
+`https://localhost:<port>/swagger`
 
 The port is determined by the application's launch settings/environment.
 
