@@ -176,8 +176,8 @@ For example:
 - .NET 10 SDK
 - SQL Server
 - GitHub
-- A Supabase account for document storage
-- A Resend account/API key for email functionality
+- A Supabase account and API Key for document storage
+- A Resend account and API key for email functionality
 
 
 
