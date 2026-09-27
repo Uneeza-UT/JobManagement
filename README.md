@@ -316,6 +316,22 @@ Recommended testing flow:
 13. Test endpoints
 
 
+
+## Test Accounts
+
+The following demo accounts are pre-configured through the application's database seeding configuration and can be used to test the different user roles.
+
+### Administrator
+Email: admin@example.com
+Password: Admin1234!
+
+### Company
+Email: company@example.com
+Password: Company1234!
+
+### Student
+Email: student@example.com
+Password: Student1234!
  
 
 
