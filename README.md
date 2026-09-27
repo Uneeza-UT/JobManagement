@@ -146,8 +146,7 @@ JobManagement
 
 
 
-
-## Authentication & Authorization
+### Authentication
 
 The API uses ASP.NET Core Identity for user management and JWT Bearer tokens for authentication.
 
@@ -155,7 +154,36 @@ After logging in, the client receives a JWT token which must be included in auth
 
 Authorization: Bearer <token>
 
+Most API endpoints require authentication.
 
+1. Use the **Login** endpoint in Swagger to log in with one of the demo accounts provided below in the Test Accounts section.
+2. Copy the `token` value from the login response.
+3. Click **Authorize** 🔒 at the top of the Swagger page.
+4. Paste **only the token value** into the authorization field.
+5. Do **not** include quotation marks (`" "`) or the `Bearer ` prefix.
+6. Click **Authorize**, then **Close**.
+7. You can now test the protected endpoints according to the user's role.
+
+**Example:** If the login response contains:
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1Ni..."
+}
+```
+
+paste:
+
+```text
+eyJhbGciOiJIUzI1Ni...
+```
+
+into the Swagger authorization field.
+
+
+
+
+## Authorization
 
 Authorization is role-based and resource ownership is also enforced where required.
 
