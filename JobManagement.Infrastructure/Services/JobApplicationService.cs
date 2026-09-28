@@ -13,7 +13,6 @@ using JobManagement.Domain;
 using JobManagement.Domain.Enums;
 using JobManagement.Identity.Models;
 using Microsoft.AspNetCore.Identity;
-using System.ComponentModel.Design;
 
 namespace JobManagement.Infrastructure.Services
 {

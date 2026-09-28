@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace JobManagement.Domain.Enums;
+﻿namespace JobManagement.Domain.Enums;
 
 public enum JobApprovalStatus
 {

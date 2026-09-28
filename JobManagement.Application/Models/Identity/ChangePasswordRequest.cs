@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace JobManagement.Application.Models.Identity;
+﻿namespace JobManagement.Application.Models.Identity;
 
 public class ChangePasswordRequest
 {

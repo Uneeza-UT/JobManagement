@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using JobManagement.Persistence.DatabaseContext;
 using JobManagement.Application.Contracts.Persistence;
 using JobManagement.Persistence.Repositories;
-using JobManagement.Application.Contracts.Services;
 
 namespace JobManagement.Persistence;
 

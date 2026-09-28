@@ -1,7 +1,4 @@
-﻿using JobManagement.Application.DTOs.Common;
-using JobManagement.Domain;
-using JobManagement.Domain.Shared;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
 namespace JobManagement.Application.Contracts.Persistence;
 

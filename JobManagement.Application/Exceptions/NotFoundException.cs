@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace JobManagement.Application.Exceptions;
+﻿namespace JobManagement.Application.Exceptions;
 
 public class NotFoundException : Exception
 {
