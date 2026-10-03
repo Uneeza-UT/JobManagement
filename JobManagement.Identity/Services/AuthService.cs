@@ -222,7 +222,7 @@ namespace JobManagement.Identity.Services
                 Body = $"Hello {user.FirstName},\n\n" +
                         "Your password for the Job Management System has been changed.\n\n" +
                         "If you made this change, no further action is required.\n\n" +
-                        "If you did not change your password, please contact the system administrator immediately.\r\n\n\n" +
+                        "If you did not change your password, please contact the system administrator immediately.\n\n" +
                         "Thank you,\n" +
                         "Job Management System"
             });
@@ -266,7 +266,7 @@ namespace JobManagement.Identity.Services
 
         }
 
-        //Method to change password from profile when user is logged in
+        // Reset the user's password using the provided reset token 
         public async Task ResetPassword(ResetPasswordRequest request)
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
@@ -299,7 +299,7 @@ namespace JobManagement.Identity.Services
                 Body = $"Hello {user.FirstName},\n\n" +
                         "Your password for the Job Management System has been changed.\n\n" +
                         "If you made this change, no further action is required.\n\n" +
-                        "If you did not change your password, please contact the system administrator immediately.\r\n\n\n" +
+                        "If you did not change your password, please contact the system administrator immediately.\n\n" +
                         "Thank you,\n" +
                         "Job Management System"
             });
