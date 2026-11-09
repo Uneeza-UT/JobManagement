@@ -230,8 +230,10 @@ Before running the application, configure the following settings:
     "Issuer": "your-issuer",
     "Audience": "your-audience"
   },
-  "Resend": {
-    "ApiKey": "your-resend-api-key"
+  "EmailSettings": {
+    "ApiKey": "your-secret-key",
+    "FromAddress": "your-verified-sender-email",
+    "FromName": "your-sender-name"
   },
   "Supabase": {
     "Url": "your-supabase-url",
