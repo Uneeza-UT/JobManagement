@@ -135,7 +135,7 @@ namespace JobManagement.Infrastructure.Services
 
             if (job == null)
             {
-                throw new NotFoundException(nameof(JobApplication), dto.JobId);
+                throw new NotFoundException(nameof(Job), dto.JobId);
             }
 
 
